@@ -392,7 +392,6 @@
 
     <link rel="icon" href="data:,">
     <style id="review-protection-style">
-      html:not(.review-access-ok) body { visibility: hidden; }
       .review-watermark {
         position: fixed;
         right: 12px;
@@ -407,65 +406,7 @@
         padding: 6px 10px;
         backdrop-filter: blur(6px);
       }
-      .review-denied {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: #f8fafc;
-        color: #0f172a;
-        font-family: "Microsoft YaHei", sans-serif;
-      }
-      .review-denied-box {
-        max-width: 420px;
-        padding: 28px;
-        border: 1px solid #dbe3ef;
-        border-radius: 8px;
-        background: #fff;
-        box-shadow: 0 18px 46px rgba(15, 23, 42, 0.12);
-      }
     </style>
-
-    <script id="review-access-gate">
-      (function () {
-        var expected = "2716a5ced73ba49995d5130fde58597c0dc46018f01afe34a9252a8252c0a1c1";
-        var expectedFallback = "cc21fffb";
-        var storageKey = "edu_case_review_access_v1";
-        function fallbackHash(input) {
-          var h = 0x811c9dc5;
-          for (var i = 0; i < input.length; i += 1) {
-            h ^= input.charCodeAt(i);
-            h = Math.imul(h, 0x01000193) >>> 0;
-          }
-          return ("00000000" + h.toString(16)).slice(-8);
-        }
-        function sha256(input) {
-          if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
-            return Promise.resolve(fallbackHash(input));
-          }
-          return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input)).then(function (buffer) {
-            return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
-              return b.toString(16).padStart(2, "0");
-            }).join("");
-          });
-        }
-        function deny() {
-          document.documentElement.className = "";
-          document.documentElement.innerHTML = "<body><main class=\"review-denied\"><section class=\"review-denied-box\"><h1>访问码不正确</h1><p>此页面为教育案例评审演示版，请使用单独提供的访问码打开。</p></section></main><div class=\"review-watermark\">仅供教育部案例评审演示<br>AI双人游戏 · 2026-06-11</div></body>";
-        }
-        function grant(code) {
-          try { sessionStorage.setItem(storageKey, code); } catch (_) {}
-          document.documentElement.classList.add("review-access-ok");
-        }
-        var params = new URLSearchParams(location.search);
-        var candidate = params.get("code");
-        try { candidate = candidate || sessionStorage.getItem(storageKey); } catch (_) {}
-        if (!candidate) candidate = window.prompt("请输入教育案例评审访问码");
-        sha256(String(candidate || "")).then(function (hash) {
-          if (hash === expected || hash === expectedFallback) grant(String(candidate || ""));
-          else deny();
-        }).catch(deny);
-      })();
-    </script>
 </head>
 
 <body>
@@ -532,7 +473,7 @@
         </div>
     </div>
 
-    <script src="assets/motion-core.8c3ecda6b1.js"></script>
+    <script src="assets/motion-core.fd53737566.js"></script>
 <script src="assets/dual-game.6e12bb64bf.js"></script>
 <div class="review-watermark">仅供教育部案例评审演示<br>AI双人游戏 · 2026-06-11</div>
 </body>
