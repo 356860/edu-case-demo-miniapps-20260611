@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>魔镜系统3.1 - 评审演示版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            padding: 20px;
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .container {
+            width: min(1280px, 100%);
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+        }
+
+        /* 顶部栏 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0;
+            color: #111827;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            line-height: 1.3;
+        }
+
+        .setup-btn {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .setup-btn:hover {
+            background: #1f2937;
+        }
+
+        /* 导航标签 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e5e7eb;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 2px;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-sub);
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            transition: 0.3s;
+            font-size: 16px;
+            flex: 0 0 auto;
+            white-space: nowrap;
+            min-height: 44px;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 上传与按钮 */
+        .upload-area {
+            border: 2px dashed var(--primary);
+            padding: 40px;
+            text-align: center;
+            border-radius: 12px;
+            background: var(--primary-light);
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            background: #c7d2fe;
+            transform: scale(1.01);
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        .action-bar>div {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-height: 40px;
+            touch-action: manipulation;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+
+        .btn-group {
+            background: var(--secondary);
+        }
+
+        .btn-print {
+            background: var(--primary);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        select {
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            min-width: 200px;
+            font-size: 14px;
+            max-width: 100%;
+            box-sizing: border-box;
+            background: rgba(15, 23, 42, 0.5);
+            color: #f1f5f9;
+        }
+
+        /* 布局与卡片 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            height: 100%;
+            overflow-x: auto;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 140px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 5px 0;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .prescription-box {
+            background: rgba(245, 158, 11, 0.08);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .ai-box {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .ai-header {
+            color: #93c5fd;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+            min-width: 640px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.06);
+            font-weight: 600;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            width: min(600px, calc(100vw - 24px));
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 24px);
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            color: #999;
+        }
+
+        .platform-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+        }
+
+        .platform-note {
+            width: 100%;
+            min-height: 110px;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 14px;
+        }
+
+        .resource-table-host {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 12px;
+        }
+
+        .resource-table {
+            width: 100%;
+            min-width: 860px;
+            border-collapse: collapse;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+
+        .resource-table th,
+        .resource-table td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        .resource-table th {
+            background: rgba(255, 255, 255, 0.06);
+            font-weight: 600;
+        }
+
+        .resource-table input,
+        .resource-table select {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .resource-link-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .resource-link-cell input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .btn-link {
+            background: #2563eb;
+            padding: 8px 10px;
+            white-space: nowrap;
+        }
+
+        .resource-status {
+            margin-top: 6px;
+            font-size: 12px;
+        }
+
+        .status-specific {
+            color: #166534;
+        }
+
+        .status-entry {
+            color: #92400e;
+        }
+
+        .status-missing {
+            color: #b91c1c;
+        }
+
+        .id-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.12);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .op-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 84px;
+        }
+
+        .btn-mini {
+            padding: 6px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            min-height: 32px;
+        }
+
+        .btn-mini-search {
+            background: #0ea5e9;
+        }
+
+        .btn-mini-paste {
+            background: #6366f1;
+        }
+
+        .btn-mini-del {
+            background: #374151;
+        }
+
+        .link-sheet {
+            margin-top: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .link-sheet-title {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 6px;
+        }
+
+        .link-sheet-meta {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .link-sheet a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .link-sheet a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-secondary {
+            background: #0ea5e9;
+        }
+
+        .btn-warn {
+            background: #f59e0b;
+        }
+
+        .btn-dark {
+            background: #374151;
+        }
+
+        .chip {
+            display: inline-flex;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .chip-good {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+        }
+
+        .chip-info {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+        }
+
+        .chip-warn {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+        }
+
+        .muted {
+            color: var(--text-sub);
+            font-size: 13px;
+        }
+
+        .summary-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px;
+            min-height: 96px;
+            white-space: pre-wrap;
+            line-height: 1.7;
+        }
+
+        .homework-task-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .homework-pill-a {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+        }
+
+        .homework-pill-b {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+        }
+
+        .homework-pill-c {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+        }
+
+        .homework-note {
+            width: 100%;
+            min-height: 34px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            box-sizing: border-box;
+            background: rgba(15, 23, 42, 0.5);
+            color: #f1f5f9;
+        }
+
+        .homework-mini-input {
+            width: 90px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.5);
+            color: #f1f5f9;
+        }
+
+        .homework-select {
+            min-width: 0;
+            width: 100%;
+        }
+
+        .mirror-toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .mirror-toolbar select,
+        .mirror-toolbar input {
+            min-width: 240px;
+            flex: 1 1 260px;
+        }
+
+        .mirror-iframe {
+            width: 100%;
+            min-height: 760px;
+            height: 74vh;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #020617;
+        }
+
+        .mirror-hint {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px;
+            line-height: 1.7;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            body {
+                padding: 14px;
+            }
+
+            .container {
+                padding: 22px;
+                border-radius: 12px;
+            }
+
+            .mirror-iframe {
+                min-height: 620px;
+                height: 70vh;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .platform-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-bar {
+                padding: 12px;
+            }
+
+            .action-bar>div {
+                width: 100%;
+            }
+
+            .mirror-toolbar select,
+            .mirror-toolbar input {
+                min-width: 0 !important;
+                width: 100% !important;
+                flex-basis: 100%;
+            }
+
+            .mirror-iframe {
+                min-height: 560px;
+                height: 68vh;
+            }
+
+            .resource-table {
+                min-width: 760px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 14px;
+                border-radius: 10px;
+            }
+
+            header {
+                padding-bottom: 14px;
+                margin-bottom: 14px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .tabs {
+                margin-bottom: 16px;
+            }
+
+            .tab-btn {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .upload-area {
+                padding: 24px 14px;
+            }
+
+            .upload-area h3 {
+                font-size: 20px !important;
+            }
+
+            .action-bar {
+                gap: 10px;
+            }
+
+            .action-bar label {
+                font-size: 13px;
+            }
+
+            .action-bar .btn,
+            .action-bar button,
+            .action-bar select,
+            .action-bar input,
+            .action-bar textarea {
+                width: 100% !important;
+            }
+
+            .stats-row {
+                gap: 10px;
+            }
+
+            .stat-box {
+                min-width: calc(50% - 5px);
+                padding: 12px;
+            }
+
+            .stat-val {
+                font-size: 24px;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 10px;
+            }
+
+            .platform-note {
+                min-height: 96px;
+            }
+
+            .summary-box {
+                min-height: 120px;
+            }
+
+            .data-table {
+                min-width: 700px;
+                font-size: 13px;
+            }
+
+            .modal-content {
+                padding: 16px;
+                border-radius: 10px;
+            }
+
+            .mirror-iframe {
+                min-height: 500px;
+                height: 64vh;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-box {
+                min-width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .tab-btn {
+                padding: 9px 12px;
+                font-size: 13px;
+            }
+
+            .mirror-iframe {
+                min-height: 440px;
+                height: 62vh;
+            }
+        }
+
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        .score-float {
+            position: absolute;
+            color: #f59e0b;
+            font-weight: 900;
+            font-size: 32px;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: floatUp 1.8s ease-out forwards;
+            z-index: 1000;
+            pointer-events: none;
+            text-shadow: 0 4px 12px rgba(245, 158, 11, 0.6);
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .pulse-text {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.7; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.7; transform: scale(0.98); }
+        }
+        /* ========== GLASSMORPHISM DARK THEME ========== */
+
+        :root {
+            --primary: #8b5cf6 !important;
+            --primary-light: rgba(139, 92, 246, 0.15) !important;
+            --secondary: #10b981 !important;
+            --accent: #f59e0b !important;
+            --bg: #0f172a !important;
+            --card-bg: rgba(255, 255, 255, 0.04) !important;
+            --text-main: #f1f5f9 !important;
+            --text-sub: #94a3b8 !important;
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background: var(--bg) !important;
+            color: var(--text-main) !important;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -30vh;
+            left: -15vw;
+            width: 80vw;
+            height: 80vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25), transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+            animation: orb1 25s infinite alternate ease-in-out;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -30vh;
+            right: -15vw;
+            width: 70vw;
+            height: 70vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.2), transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+            animation: orb2 20s infinite alternate ease-in-out;
+        }
+
+        @keyframes orb1 {
+            0% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            100% {
+                transform: translate(60px, -40px) scale(1.15)
+            }
+        }
+
+        @keyframes orb2 {
+            0% {
+                transform: translate(0, 0) scale(1)
+            }
+
+            100% {
+                transform: translate(-40px, 50px) scale(1.1)
+            }
+        }
+
+        .container {
+            background: rgba(15, 23, 42, 0.5) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        header {
+            border-bottom-color: var(--glass-border) !important;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        label,
+        p,
+        td,
+        th,
+        span,
+        div {
+            color: var(--text-main) !important;
+        }
+
+        .muted,
+        [style*="color: #666"],
+        [style*="color:#666"] {
+            color: var(--text-sub) !important;
+        }
+
+        .card,
+        .upload-area,
+        .prescription-box,
+        .stat-box,
+        .summary-box,
+        .modal-content,
+        .mirror-hint,
+        .link-sheet {
+            background: rgba(255, 255, 255, 0.04) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            transition: transform 0.25s, box-shadow 0.25s, background 0.25s !important;
+        }
+
+        .card:hover,
+        .stat-box:hover {
+            transform: translateY(-3px) !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(139, 92, 246, 0.5) !important;
+            background: rgba(139, 92, 246, 0.08) !important;
+        }
+
+        .upload-area:hover {
+            background: rgba(139, 92, 246, 0.15) !important;
+            border-color: rgba(139, 92, 246, 0.8) !important;
+        }
+
+        .upload-area h3 {
+            color: #a78bfa !important;
+        }
+
+        .tabs {
+            border-bottom-color: var(--glass-border) !important;
+        }
+
+        .tab-btn {
+            color: var(--text-sub) !important;
+            background: transparent !important;
+        }
+
+        .tab-btn:hover {
+            color: #e2e8f0 !important;
+            background: rgba(139, 92, 246, 0.12) !important;
+        }
+
+        .tab-btn.active {
+            color: #fff !important;
+            border-bottom-color: var(--primary) !important;
+            background: rgba(139, 92, 246, 0.2) !important;
+        }
+
+        .setup-btn {
+            background: rgba(55, 65, 81, 0.6) !important;
+            backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .setup-btn:hover {
+            background: rgba(55, 65, 81, 0.9) !important;
+        }
+
+        .btn {
+            backdrop-filter: blur(4px) !important;
+            border: 1px solid rgba(139, 92, 246, 0.4) !important;
+            background: rgba(139, 92, 246, 0.15) !important;
+            color: #fff !important;
+        }
+
+        .btn:hover {
+            background: rgba(139, 92, 246, 0.3) !important;
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.4) !important;
+        }
+
+        .btn-ai {
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .btn-ai:hover {
+            background: rgba(59, 130, 246, 0.3) !important;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5) !important;
+        }
+
+        .btn-warn,
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
+        }
+
+        .btn-warn:hover,
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .btn-group {
+            background: rgba(245, 158, 11, 0.15) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+        }
+
+        .btn-group:hover {
+            background: rgba(245, 158, 11, 0.3) !important;
+        }
+
+        .btn-print {
+            background: rgba(236, 72, 153, 0.15) !important;
+            border-color: rgba(236, 72, 153, 0.4) !important;
+        }
+
+        .btn-print:hover {
+            background: rgba(236, 72, 153, 0.3) !important;
+        }
+
+        .btn-dark {
+            background: rgba(55, 65, 81, 0.4) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+        }
+
+        .data-table th {
+            background: rgba(255, 255, 255, 0.06) !important;
+        }
+
+        .data-table td,
+        .data-table th {
+            border-color: var(--glass-border) !important;
+        }
+
+        select,
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            background: rgba(15, 23, 42, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #f1f5f9 !important;
+            border-radius: 6px !important;
+        }
+
+        select option {
+            background: #1e293b !important;
+            color: #fff !important;
+        }
+
+        .chip {
+            background: rgba(99, 102, 241, 0.15) !important;
+            border: 1px solid rgba(99, 102, 241, 0.3) !important;
+            color: #c7d2fe !important;
+        }
+
+        [style*="background:#e0e7ff"],
+        [style*="background:#fce7f3"],
+        [style*="background:#fef3c7"],
+        [style*="background:#d1fae5"] {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid var(--glass-border) !important;
+        }
+
+        .link-sheet a {
+            color: #60a5fa !important;
+        }
+
+        .mirror-iframe {
+            border: 1px solid var(--glass-border) !important;
+            border-radius: 12px !important;
+        }
+
+        #groupModal .modal-content {
+            background: rgba(15, 23, 42, 0.92) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+
+        .modal {
+            background: rgba(0, 0, 0, 0.6) !important;
+            backdrop-filter: blur(4px) !important;
+        }
+
+        .close-btn {
+            color: #cbd5e1 !important;
+        }
+
+        .close-btn:hover {
+            color: #fff !important;
+        }
+
+        [style*="color:var(--danger)"],
+        [style*="color:#ef4444"] {
+            color: #f87171 !important;
+            text-shadow: 0 0 8px rgba(248, 113, 113, 0.3);
+        }
+
+        [style*="color:#10b981"] {
+            color: #34d399 !important;
+            text-shadow: 0 0 8px rgba(52, 211, 153, 0.3);
+        }
+
+        [style*="color:#d97706"] {
+            color: #fbbf24 !important;
+        }
+    </style>
+
+    <link rel="icon" href="data:,">
+    <style id="review-protection-style">
+      html:not(.review-access-ok) body { visibility: hidden; }
+      .review-watermark {
+        position: fixed;
+        right: 12px;
+        bottom: 10px;
+        z-index: 2147483647;
+        pointer-events: none;
+        font: 600 12px/1.45 "Microsoft YaHei", sans-serif;
+        color: rgba(15, 23, 42, 0.46);
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 6px;
+        padding: 6px 10px;
+        backdrop-filter: blur(6px);
+      }
+      .review-denied {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: "Microsoft YaHei", sans-serif;
+      }
+      .review-denied-box {
+        max-width: 420px;
+        padding: 28px;
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 18px 46px rgba(15, 23, 42, 0.12);
+      }
+    </style>
+
+    <script id="review-access-gate">
+      (function () {
+        var expected = "2716a5ced73ba49995d5130fde58597c0dc46018f01afe34a9252a8252c0a1c1";
+        var expectedFallback = "cc21fffb";
+        var storageKey = "edu_case_review_access_v1";
+        function fallbackHash(input) {
+          var h = 0x811c9dc5;
+          for (var i = 0; i < input.length; i += 1) {
+            h ^= input.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+          }
+          return ("00000000" + h.toString(16)).slice(-8);
+        }
+        function sha256(input) {
+          if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+            return Promise.resolve(fallbackHash(input));
+          }
+          return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input)).then(function (buffer) {
+            return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
+              return b.toString(16).padStart(2, "0");
+            }).join("");
+          });
+        }
+        function deny() {
+          document.documentElement.className = "";
+          document.documentElement.innerHTML = "<body><main class=\"review-denied\"><section class=\"review-denied-box\"><h1>访问码不正确</h1><p>此页面为教育案例评审演示版，请使用单独提供的访问码打开。</p></section></main><div class=\"review-watermark\">仅供教育部案例评审演示<br>魔镜系统3.1 · 2026-06-11</div></body>";
+        }
+        function grant(code) {
+          try { sessionStorage.setItem(storageKey, code); } catch (_) {}
+          document.documentElement.classList.add("review-access-ok");
+        }
+        var params = new URLSearchParams(location.search);
+        var candidate = params.get("code");
+        try { candidate = candidate || sessionStorage.getItem(storageKey); } catch (_) {}
+        if (!candidate) candidate = window.prompt("请输入教育案例评审访问码");
+        sha256(String(candidate || "")).then(function (hash) {
+          if (hash === expected || hash === expectedFallback) grant(String(candidate || ""));
+          else deny();
+        }).catch(deny);
+      })();
+    </script>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🏆 智能体育画像系统 v3.1 <span
+                    style="font-size:14px; background:#10b981; color:white; padding:2px 8px; border-radius:4px; margin-left:10px;">跨域融合版</span>
+            </h1>
+            <button class="setup-btn" onclick="openSettings()">评审版说明</button>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('upload')">📥 数据导入</button>
+            <button class="tab-btn" onclick="switchTab('individual')" id="tab-ind" disabled>👤 个人画像</button>
+            <button class="tab-btn" onclick="switchTab('class')" id="tab-class" disabled>🏫 班级画像</button>
+            <button class="tab-btn" onclick="switchTab('project')" id="tab-proj" disabled>📊 项目分析</button>
+            <button class="tab-btn" onclick="switchTab('platform')" id="tab-platform" disabled>🏛 国家平台融合</button>
+            <button class="tab-btn" onclick="switchTab('mirror')" id="tab-mirror" disabled>🎯 跟练镜像</button>
+        </div>
+
+        <div id="upload" class="tab-content active">
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <h3 style="color: var(--primary); font-size: 24px; margin-bottom: 10px;">📁 点击上传 Excel 体测数据</h3>
+                <p style="color: #666;">自动识别：姓名、班级、性别、身高、体重（自动算BMI）、坐位体前屈、50米、跳绳、仰卧起坐</p>
+                <input type="file" id="fileInput" accept=".xlsx, .xls" multiple style="display: none;"
+                    onchange="handleMultipleFiles(this)">
+            </div>
+
+            <div class="card" style="display:none;" id="uploadPreview">
+                <h3>数据预览 (前5条) - 请检查BMI和班级是否正确</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>班级</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>BMI (自动计算)</th>
+                            <th>坐位体前屈</th>
+                            <th>50米跑</th>
+                            <th>跳绳</th>
+                            <th>仰卧起坐</th>
+                        </tr>
+                    </thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+                <div style="margin-top:20px; text-align:center;">
+                    <button class="btn btn-print" onclick="startAnalysis()">🚀 数据确认无误，开始分析</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="individual" class="tab-content">
+            <div class="action-bar">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <label>筛选班级:</label>
+                    <select id="filterClassSelect" onchange="filterStudents(this.value)" style="width:120px;"></select>
+                    <label>选择学生:</label>
+                    <select id="studentSelect" onchange="renderStudent(this.value)"></select>
+                </div>
+                <button class="btn btn-ai" onclick="askAI()">🤖 AI 点评</button>
+                <button class="btn btn-warn" onclick="syncPracticeRecordToRadar()">🔄 同步练习数据</button>
+                <button class="btn btn-group" onclick="generateGroups()">👥 智能分组</button>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3 id="stName">学生姓名</h3>
+                    <div style="height: 300px;">
+                        <div id="radarDeltaTarget" class="pulse-text" style="position:absolute; top:10px; left:0; right:0; text-align:center; color:#f59e0b; font-weight:bold; font-size:13px; opacity:0; transition:0.5s; z-index:10; pointer-events:none;">✨ 增值评价触发：训练前诊断 vs 训练后增量</div>
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <div class="prescription-box">
+                        <div style="font-weight:bold; color:#d97706; margin-bottom:8px;">💊 运动处方</div>
+                        <div id="prescriptionList" style="font-size: 14px;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📊 成绩详情</h3>
+                    <div style="height: 220px;">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div class="ai-box">
+                        <div class="ai-header"><span>✨ AI 专家点评</span></div>
+                        <div id="aiLoading" style="display:none; color:#666;">🧠 正在分析...</div>
+                        <div id="aiContent" style="font-size: 14px;">点击“AI 点评”获取分析...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="class" class="tab-content">
+            <div class="action-bar">
+                <label>当前班级：</label>
+                <select id="classSelect" onchange="renderClassDashboard(this.value)"></select>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-label">班级人数</div>
+                    <div class="stat-val" id="cls-count">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">综合平均分</div>
+                    <div class="stat-val" id="cls-avg">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">优秀率</div>
+                    <div class="stat-val" style="color:var(--secondary);" id="cls-excellent">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">不及格率</div>
+                    <div class="stat-val" style="color:var(--danger);" id="cls-fail">0%</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>🏫 班级能力雷达图</h3>
+                    <div style="height: 300px;"><canvas id="classRadarChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>📈 各项平均成绩对比</h3>
+                    <div style="height: 300px;"><canvas id="classBarChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="project" class="tab-content">
+            <div class="action-bar">
+                <label>分析项目：</label>
+                <select id="projectSelect" onchange="renderProjectAnalysis()">
+                    <option value="flex">坐位体前屈</option>
+                    <option value="run">50米跑</option>
+                    <option value="skip">1分钟跳绳</option>
+                    <option value="situp">1分钟仰卧起坐</option>
+                    <option value="bmi">BMI指数</option>
+                </select>
+            </div>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>📊 成绩分布直方图</h3>
+                    <div style="height: 300px;"><canvas id="distChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>🍰 等级占比</h3>
+                    <div style="height: 300px;"><canvas id="pieChart"></canvas></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px;">
+                <h3>🏆 该项目光荣榜 (Top 5)</h3>
+                <div id="top5List"></div>
+            </div>
+        </div>
+        <div id="platform" class="tab-content">
+            <div class="action-bar">
+                <label>平台应用场景：</label>
+                <select id="sceneSelect" style="min-width:180px;">
+                    <option value="教师授课">教师授课</option>
+                    <option value="自主学习">自主学习</option>
+                    <option value="教师备课">教师备课</option>
+                    <option value="作业活动">作业活动</option>
+                    <option value="答疑辅导">答疑辅导</option>
+                    <option value="课后服务">课后服务</option>
+                    <option value="教师研修">教师研修</option>
+                    <option value="家校互动">家校互动</option>
+                    <option value="协同管理">协同管理</option>
+                    <option value="双师课堂">双师课堂</option>
+                    <option value="其他">其他</option>
+                </select>
+                <label>本节主题：</label>
+                <input id="lessonTitle" type="text" value="武术：冲拳、推掌、劈掌组合练习" placeholder="例如：三年级武术冲拳推掌组合练习"
+                    style="flex:1; min-width:260px; padding:10px; border:1px solid #d1d5db; border-radius:6px;">
+                <button class="btn btn-secondary" onclick="addResourceRow()">新增资源行</button>
+                <button class="btn btn-ai" onclick="addSmartResourceRows()">智能新增（场景+主题）</button>
+                <button class="btn btn-print" onclick="repairGenericLinks()">修复同地址链接</button>
+                <button class="btn btn-group" onclick="saveResourceMapping()">保存资源映射</button>
+                <button class="btn btn-warn" onclick="recordPlatformUsage()">记录一次应用</button>
+                <span class="id-chip">账号：<b id="smartEduUserIdView">-</b> <button class="btn-mini btn-mini-paste"
+                        onclick="copySmartEduUserId()">复制</button> &nbsp; 密码：<b>Qq356860</b></span>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-label">已映射资源数</div>
+                    <div class="stat-val" id="resource-count">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">覆盖平台场景数</div>
+                    <div class="stat-val" id="scene-count">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">应用留痕条数</div>
+                    <div class="stat-val" id="usage-count">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">班级覆盖率</div>
+                    <div class="stat-val" id="coverage-rate">0%</div>
+                </div>
+            </div>
+
+            <div class="platform-grid">
+                <div class="card">
+                    <h3>🌟 机制一：基于教学功能的【资源映射模板】</h3>
+                    <div class="muted">聚焦动作示范与备课优化，让国家平台资源真正进入课堂决策系统。将资源与本课环节一一对应，作为案例硬证据。</div>
+                    <div class="resource-table-host">
+                        <table class="resource-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:15%;">应用场景</th>
+                                    <th style="width:22%;">资源名称</th>
+                                    <th style="width:30%;">资源链接</th>
+                                    <th style="width:21%;">融合说明</th>
+                                    <th style="width:12%;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resourceBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>创新做法与摘要</h3>
+                    <div style="margin-bottom:8px;" class="muted">写清“平台资源 + AI画像 + 分层教学 + 增值评价”如何形成闭环。</div>
+                    <textarea id="innovationNote" class="platform-note"
+                        placeholder="示例：课前学生自主观看国家平台《武术基本功（冲拳、推掌、劈掌）》微课预习；课中结合AI画像系统，捕捉冲拳未转腰送肩等个性化错点；课后针对画像中展现的短板（如上肢核心力量不足），定向推送国家平台《核心力量专项训练》分层作业，实现‘精准诊断-定向补短’的教学闭环。"></textarea>
+                    <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn-ai" onclick="generateCaseSummary()">生成300字摘要</button>
+                        <button class="btn btn-print" onclick="copyCaseSummary()">复制摘要</button>
+                        <button class="btn btn-dark" onclick="exportEvidenceExcel()">导出案例证据Excel</button>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <span class="chip chip-info">推荐表摘要可直接粘贴</span>
+                        <span class="chip chip-good">自动统计场景覆盖与应用次数</span>
+                    </div>
+                    <div id="summaryBox" class="summary-box" style="margin-top:12px;">点击“生成300字摘要”后自动生成。</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>平台应用留痕台账</h3>
+                <div class="muted">建议每课记录1次，后期可直接作为申报附件“应用过程证据”。</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>场景</th>
+                            <th>课题</th>
+                            <th>班级</th>
+                            <th>学生数</th>
+                            <th>核心成效</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usageBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>🎯 机制二：数据驱动的分层【任务生成模板】</h3>
+                <div class="muted">自动分层任务生成、提交与薄弱项统计，形成分层教学闭环证据。</div>
+                <div class="muted" style="margin-top: 8px; margin-bottom: 8px;">
+                    <span class="homework-pill-a" style="padding: 3px 8px; border-radius: 6px; font-size: 13px; margin-right: 8px;">[A层] 强化展示质量</span>
+                    <span class="homework-pill-b" style="padding: 3px 8px; border-radius: 6px; font-size: 13px; margin-right: 8px;">[B层] 专注错误纠偏</span>
+                    <span class="homework-pill-c" style="padding: 3px 8px; border-radius: 6px; font-size: 13px;">[C层] 巩固基础动作</span>
+                </div>
+                <div class="action-bar" style="margin-top:10px;">
+                    <label>看板班级：</label>
+                    <select id="homeworkClassSelect" style="min-width:160px;"></select>
+                    <button class="btn btn-secondary" onclick="generateLayerHomeworkPlan()">一键生成A/B/C任务</button>
+                    <button class="btn btn-print" onclick="saveLayerHomeworkBoard()">保存提交台账</button>
+                    <button class="btn btn-dark" onclick="renderLayerHomeworkBoard()">刷新看板</button>
+                </div>
+
+                <div class="resource-table-host">
+                    <table class="resource-table" style="min-width:980px;">
+                        <thead>
+                            <tr>
+                                <th style="width:12%;">层级</th>
+                                <th style="width:22%;">任务标题</th>
+                                <th style="width:40%;">任务要求（可编辑）</th>
+                                <th style="width:16%;">建议场景</th>
+                                <th style="width:10%;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="homeworkTaskBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="resource-table-host" style="margin-top:12px;">
+                    <table class="resource-table" style="min-width:1280px;">
+                        <thead>
+                            <tr>
+                                <th style="width:9%;">姓名</th>
+                                <th style="width:8%;">分层</th>
+                                <th style="width:18%;">分层任务</th>
+                                <th style="width:10%;">提交状态</th>
+                                <th style="width:8%;">完成度%</th>
+                                <th style="width:12%;">薄弱项变化</th>
+                                <th style="width:11%;">提交时间</th>
+                                <th style="width:24%;">教师备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="homeworkSubmitBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="stats-row" style="margin-top:12px;">
+                    <div class="stat-box">
+                        <div class="stat-label">提交总人数</div>
+                        <div class="stat-val" id="hw-total">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">已提交人数</div>
+                        <div class="stat-val" id="hw-done" style="color:var(--secondary);">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">返修人数</div>
+                        <div class="stat-val" id="hw-rework" style="color:var(--danger);">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">提交完成率</div>
+                        <div class="stat-val" id="hw-rate">0%</div>
+                    </div>
+                </div>
+                <div id="homeworkWeakSummary" class="summary-box" style="margin-top:12px;">暂无统计。请先生成分层任务并更新学生提交状态。</div>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h3>🗂️ 机制三：应用过程与评测【证据导出模板】</h3>
+                <div class="muted">一键生成包含资源映射、应用留痕、分层任务、提交台账的完整证据链，作为申报核心附件。</div>
+                <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                    <button class="btn btn-print" onclick="generateResourceLinkSheet()">生成资源链接页</button>
+                    <button class="btn btn-group" onclick="copyResourceLinkSheet()">复制文本</button>
+                    <button class="btn btn-dark" onclick="openResourceLinkSheetWindow()">新窗口打开</button>
+                </div>
+                <div id="resourceLinkSheet" class="link-sheet">点击“生成资源链接页”后显示。</div>
+            </div>
+        </div>
+
+        <div id="mirror" class="tab-content">
+            <div class="action-bar">
+                <label>跟练资源：</label>
+                <select id="mirrorResourceSelect" style="min-width:320px;"></select>
+                <button class="btn btn-secondary" onclick="refreshMirrorResourceOptions()">刷新资源</button>
+                <button class="btn btn-print" onclick="openSelectedMirrorResource()">打开选中资源</button>
+                <button class="btn btn-group" onclick="openMirrorCaptureGuide()">录制指引</button>
+            </div>
+
+            <div class="card">
+                <div class="mirror-hint">
+                    <strong style="color:#e2e8f0; font-size:14px;">🎯 推荐双轨布局（微视频录制指引）：</strong><br>
+                    左侧放置【国家平台示范微课】窗口，右侧使用本设备的【AI跟练捕获镜像】，实现教学与跟练同步。<br>
+                    1. 先点“打开选中资源”，在新标签页登录国家平台并播放目标视频。<br>
+                    2. 在下方魔镜里点“捕获平台视频”，选择刚才播放视频的标签页。<br>
+                    3. 学生对照跟练，系统实时输出评分并进入排行榜。<br>
+                    <span style="color:var(--accent); font-weight:bold; margin-top:4px; display:inline-block;">✨ 注意力聚焦：</span> 教师请重点关注排行榜底部或控制台中标记的【重点关注学员】。
+                </div>
+                <iframe id="mirrorFrame" class="mirror-iframe" srcdoc="﻿&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;zh-CN&quot;&gt;
+
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot;
+        content=&quot;width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no&quot;&gt;
+    &lt;title&gt;AI 智能教练 (极简UI版)&lt;/title&gt;
+    &lt;script src=&quot;https://cdn.tailwindcss.com&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js&quot;&gt;&lt;/script&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/marked/marked.min.js&quot;&gt;&lt;/script&gt;
+
+    &lt;style&gt;
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            background-color: #000;
+            color: white;
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .full-screen-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #student-video {
+            object-fit: cover;
+            transform: scaleX(-1);
+            z-index: 0;
+        }
+
+        #student-canvas {
+            pointer-events: none;
+            transform: scaleX(-1);
+            z-index: 10;
+        }
+
+        .score-ring {
+            transition: stroke-dashoffset 0.2s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* 教师悬浮窗 */
+        .teacher-overlay {
+            position: absolute;
+            transition: opacity 0.1s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            z-index: 30;
+            touch-action: none;
+        }
+
+        .teacher-overlay.hidden-overlay {
+            opacity: 0 !important;
+            pointer-events: none;
+            display: none;
+        }
+
+        .teacher-panel {
+            width: min(72vw, 420px);
+            height: min(56vh, 520px);
+            max-width: calc(100vw - max(16px, var(--safe-left)) - max(16px, var(--safe-right)));
+            max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 112px);
+        }
+
+        .drag-handle {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            cursor: move;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* --- 新版学员下拉菜单样式 --- */
+        .student-dropdown-btn {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s;
+        }
+
+        .student-dropdown-btn:active {
+            transform: scale(0.95);
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .student-menu {
+            transform-origin: top left;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .student-menu.hidden-menu {
+            transform: scale(0.95);
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        /* 排行榜表格 */
+        .rank-table tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+            width: 80px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            margin-top: -5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+        }
+
+        .app-header {
+            padding-top: var(--safe-top);
+            padding-left: max(12px, var(--safe-left));
+            padding-right: max(12px, var(--safe-right));
+            height: calc(56px + var(--safe-top));
+        }
+
+        .app-footer {
+            padding-left: max(12px, var(--safe-left));
+            padding-right: max(12px, var(--safe-right));
+            padding-bottom: calc(8px + var(--safe-bottom));
+            height: calc(84px + var(--safe-bottom));
+        }
+
+        #upload-hint label,
+        #upload-hint button {
+            min-height: 42px;
+            touch-action: manipulation;
+        }
+
+        #upload-hint label {
+            width: min(82vw, 280px);
+            text-align: center;
+        }
+
+        #upload-hint button {
+            width: min(82vw, 280px);
+        }
+
+        #start-btn {
+            touch-action: manipulation;
+        }
+
+        #flash-guide {
+            padding-left: max(16px, var(--safe-left));
+            padding-right: max(16px, var(--safe-right));
+        }
+
+        #feedback-bar {
+            padding-left: max(10px, var(--safe-left));
+            padding-right: max(10px, var(--safe-right));
+        }
+
+        @media (max-width: 1024px) {
+            .teacher-panel {
+                width: min(78vw, 420px);
+                height: min(52vh, 480px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-header {
+                height: calc(52px + var(--safe-top));
+            }
+
+            .app-footer {
+                height: calc(78px + var(--safe-bottom));
+            }
+
+            .teacher-panel {
+                width: min(92vw, 380px);
+                height: min(46vh, 360px);
+                border-radius: 14px;
+                max-height: calc(100vh - var(--safe-top) - var(--safe-bottom) - 96px);
+            }
+
+            #drag-header {
+                height: 42px;
+            }
+
+            #student-menu {
+                width: min(78vw, 250px);
+            }
+
+            #guide-title {
+                font-size: clamp(1.6rem, 6.5vw, 2.4rem);
+            }
+
+            #guide-content {
+                font-size: clamp(0.95rem, 3.8vw, 1.15rem);
+                line-height: 1.5;
+                padding: 0.85rem;
+            }
+
+            #feedback-text {
+                font-size: 0.9rem;
+                padding: 0.65rem 1rem;
+            }
+
+            #capture-platform-btn,
+            #open-target-link-btn {
+                font-size: 0.82rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .teacher-panel {
+                width: calc(100vw - max(12px, var(--safe-left)) - max(12px, var(--safe-right)));
+                height: min(44vh, 320px);
+            }
+
+            #upload-hint label,
+            #upload-hint button {
+                width: min(88vw, 260px);
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-height: 560px) {
+            .teacher-panel {
+                height: min(42vh, 280px);
+            }
+
+            .app-footer {
+                height: calc(68px + var(--safe-bottom));
+            }
+
+            #feedback-bar {
+                bottom: calc(78px + var(--safe-bottom)) !important;
+            }
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+
+&lt;body class=&quot;h-screen w-screen overflow-hidden bg-black&quot;&gt;
+
+    &lt;header class=&quot;app-header absolute top-0 left-0 right-0 flex items-center justify-between z-50 pointer-events-none&quot;&gt;
+
+        &lt;div class=&quot;relative pointer-events-auto&quot;&gt;
+            &lt;button onclick=&quot;StudentManager.toggleMenu()&quot;
+                class=&quot;student-dropdown-btn flex items-center gap-2 px-4 py-2 rounded-full text-white shadow-lg&quot;&gt;
+                &lt;div id=&quot;status-indicator&quot; class=&quot;w-2 h-2 rounded-full bg-yellow-500 animate-pulse&quot;&gt;&lt;/div&gt;
+                &lt;span id=&quot;header-student-name&quot; class=&quot;font-bold text-sm tracking-wide&quot;&gt;加载中...&lt;/span&gt;
+                &lt;svg class=&quot;w-3 h-3 text-slate-400&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;&gt;
+                    &lt;path stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; stroke-width=&quot;2&quot; d=&quot;M19 9l-7 7-7-7&quot;&gt;&lt;/path&gt;
+                &lt;/svg&gt;
+            &lt;/button&gt;
+
+            &lt;div id=&quot;student-menu&quot;
+                class=&quot;student-menu hidden-menu absolute top-12 left-0 w-56 rounded-xl shadow-2xl p-2 z-[60]&quot;&gt;
+                &lt;div id=&quot;student-list-container&quot; class=&quot;max-h-[200px] overflow-y-auto space-y-1 mb-2 custom-scrollbar&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;flex gap-1 pt-2 border-t border-white/10&quot;&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;new-student-name&quot; placeholder=&quot;输入新名字...&quot;
+                        class=&quot;flex-1 bg-black/40 border border-white/20 rounded px-2 py-1.5 text-xs text-white focus:border-blue-500 outline-none&quot;&gt;
+                    &lt;button onclick=&quot;StudentManager.add()&quot;
+                        class=&quot;bg-blue-600 hover:bg-blue-500 px-3 rounded text-white text-xs font-bold transition&quot;&gt;添加&lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;flex gap-3 pointer-events-auto&quot;&gt;
+            &lt;button onclick=&quot;toggleTeacherView()&quot;
+                class=&quot;p-2 bg-slate-800/60 backdrop-blur rounded-full text-white border border-white/10 active:scale-95 transition&quot;&gt;
+                👁️
+            &lt;/button&gt;
+            &lt;button onclick=&quot;document.getElementById('settings-modal').classList.remove('hidden')&quot;
+                class=&quot;p-2 bg-slate-800/60 backdrop-blur rounded-full text-white border border-white/10 active:scale-95 transition&quot;&gt;
+                ⚙️
+            &lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/header&gt;
+
+    &lt;main class=&quot;relative w-full h-full overflow-hidden&quot;&gt;
+
+        &lt;video id=&quot;student-video&quot; playsinline webkit-playsinline muted autoplay class=&quot;full-screen-layer&quot;&gt;&lt;/video&gt;
+        &lt;canvas id=&quot;student-canvas&quot; class=&quot;full-screen-layer&quot;&gt;&lt;/canvas&gt;
+
+        &lt;div id=&quot;flash-guide&quot;
+            class=&quot;absolute inset-0 flex items-center justify-center z-[60] px-8 pointer-events-none opacity-0 transition-opacity duration-500&quot;&gt;
+            &lt;div class=&quot;max-w-2xl text-center&quot;&gt;
+                &lt;h1 id=&quot;guide-title&quot; class=&quot;text-4xl md:text-6xl font-bold text-yellow-400 mb-6 drop-shadow-lg&quot;&gt;准备开始
+                &lt;/h1&gt;
+                &lt;div id=&quot;guide-content&quot;
+                    class=&quot;text-xl md:text-2xl text-white font-medium leading-relaxed drop-shadow-md text-left bg-white/10 p-6 rounded-xl border-l-4 border-yellow-400&quot;&gt;
+                    ...&lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div id=&quot;teacher-container&quot;
+            class=&quot;teacher-overlay teacher-panel bg-black rounded-2xl overflow-hidden border-2 border-blue-500/50 flex flex-col&quot;
+            style=&quot;top: 50%; left: 50%; transform: translate(-50%, -50%);&quot;&gt;
+            &lt;div id=&quot;drag-header&quot;
+                class=&quot;drag-handle h-10 w-full flex items-center justify-between px-3 shrink-0 z-50 select-none&quot;&gt;
+                &lt;span class=&quot;text-xs font-bold text-blue-300 flex items-center gap-1&quot;&gt;:: 按住拖动&lt;/span&gt;
+                &lt;div class=&quot;flex items-center gap-2&quot; onmousedown=&quot;event.stopPropagation()&quot;
+                    ontouchstart=&quot;event.stopPropagation()&quot;&gt;
+                    &lt;span class=&quot;text-[10px] text-slate-200&quot;&gt;透明度&lt;/span&gt;
+                    &lt;input type=&quot;range&quot; min=&quot;0.2&quot; max=&quot;1&quot; step=&quot;0.05&quot; value=&quot;1&quot;
+                        oninput=&quot;document.getElementById('teacher-container').style.opacity = this.value&quot;&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;relative flex-1 w-full overflow-hidden&quot;&gt;
+                &lt;video id=&quot;teacher-video&quot; playsinline webkit-playsinline muted loop
+                    class=&quot;w-full h-full object-cover&quot;&gt;&lt;/video&gt;
+                &lt;div id=&quot;upload-hint&quot;
+                    class=&quot;absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-40&quot;&gt;
+                    &lt;div class=&quot;text-white mb-3 font-bold text-lg&quot;&gt;上传示范&lt;/div&gt;
+                    &lt;label
+                        class=&quot;px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-white shadow-lg cursor-pointer flex flex-col items-center border border-blue-400&quot;&gt;
+                        &lt;span&gt;选择视频&lt;/span&gt;
+                        &lt;input type=&quot;file&quot; id=&quot;video-upload&quot; accept=&quot;video/*&quot; class=&quot;hidden&quot;&gt;
+                    &lt;/label&gt;
+                    &lt;button id=&quot;capture-platform-btn&quot;
+                        class=&quot;mt-3 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold text-white border border-emerald-300 shadow&quot;&gt;
+                        捕获平台视频
+                    &lt;/button&gt;
+                    &lt;button id=&quot;open-target-link-btn&quot;
+                        class=&quot;mt-2 px-4 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-100 border border-slate-500&quot;&gt;
+                        打开已选平台资源
+                    &lt;/button&gt;
+                    &lt;div class=&quot;text-[11px] text-slate-300 mt-2 px-4 text-center&quot;&gt;
+                        先在国家平台打开目标视频，播放后点击“捕获平台视频”并选择对应标签页/窗口。
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div class=&quot;absolute top-16 md:top-20 right-2 md:right-4 z-20 pointer-events-none&quot;&gt;
+            &lt;div class=&quot;relative w-20 h-20&quot;&gt;
+                &lt;svg class=&quot;w-full h-full&quot; viewBox=&quot;0 0 100 100&quot;&gt;
+                    &lt;circle class=&quot;text-black/50 stroke-current&quot; stroke-width=&quot;8&quot; cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot;
+                        fill=&quot;rgba(0,0,0,0.5)&quot;&gt;&lt;/circle&gt;
+                    &lt;circle id=&quot;score-circle&quot; class=&quot;text-green-500 score-ring stroke-current&quot; stroke-width=&quot;8&quot;
+                        stroke-linecap=&quot;round&quot; cx=&quot;50&quot; cy=&quot;50&quot; r=&quot;40&quot; fill=&quot;transparent&quot; stroke-dasharray=&quot;251.2&quot;
+                        stroke-dashoffset=&quot;251.2&quot;&gt;&lt;/circle&gt;
+                &lt;/svg&gt;
+                &lt;div class=&quot;absolute inset-0 flex items-center justify-center flex-col text-white drop-shadow-md&quot;&gt;
+                    &lt;span id=&quot;score-text&quot; class=&quot;text-3xl font-bold&quot;&gt;0&lt;/span&gt;
+                    &lt;span class=&quot;text-[10px] opacity-70&quot;&gt;SCORE&lt;/span&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+
+        &lt;div id=&quot;feedback-bar&quot;
+            class=&quot;absolute bottom-28 md:bottom-36 left-0 right-0 text-center pointer-events-none opacity-0 transition-opacity duration-300 z-50 px-4&quot;&gt;
+            &lt;span id=&quot;feedback-text&quot;
+                class=&quot;bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-2xl text-lg font-bold shadow-xl border border-white/20&quot;&gt;...&lt;/span&gt;
+        &lt;/div&gt;
+    &lt;/main&gt;
+
+    &lt;footer
+        class=&quot;app-footer absolute bottom-0 w-full bg-gradient-to-t from-black/95 to-transparent flex items-center justify-between z-50 pointer-events-none&quot;&gt;
+        &lt;div class=&quot;w-14 md:w-20&quot;&gt;&lt;/div&gt;
+
+        &lt;button id=&quot;start-btn&quot;
+            class=&quot;pointer-events-auto w-16 h-16 rounded-full bg-slate-700/80 backdrop-blur flex items-center justify-center shadow-lg shadow-black/50 disabled:opacity-50 disabled:grayscale transition-all active:scale-90 border-2 border-white/20&quot;
+            disabled&gt;
+            &lt;svg class=&quot;w-8 h-8 text-white ml-1&quot; fill=&quot;currentColor&quot; viewBox=&quot;0 0 24 24&quot;&gt;
+                &lt;path d=&quot;M8 5v14l11-7z&quot; /&gt;
+            &lt;/svg&gt;
+        &lt;/button&gt;
+
+        &lt;div class=&quot;w-14 md:w-20 flex justify-end pointer-events-auto&quot;&gt;
+            &lt;button onclick=&quot;Leaderboard.show()&quot; class=&quot;flex flex-col items-center gap-1 group&quot;&gt;
+                &lt;div
+                    class=&quot;w-10 h-10 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center group-hover:bg-yellow-500 transition-colors&quot;&gt;
+                    &lt;span class=&quot;text-xl&quot;&gt;🏆&lt;/span&gt;
+                &lt;/div&gt;
+                &lt;span class=&quot;text-[10px] text-yellow-500 font-bold&quot;&gt;排行榜&lt;/span&gt;
+            &lt;/button&gt;
+        &lt;/div&gt;
+    &lt;/footer&gt;
+
+    &lt;div id=&quot;settings-modal&quot; class=&quot;fixed inset-0 bg-black/90 z-[100] hidden flex items-center justify-center p-4&quot;&gt;
+        &lt;div class=&quot;bg-slate-800 w-full max-w-sm rounded-xl p-6 border border-slate-700 shadow-2xl&quot;&gt;
+            &lt;h3 class=&quot;text-white font-bold mb-4 text-xl&quot;&gt;⚙️ 训练设置&lt;/h3&gt;
+            &lt;div class=&quot;space-y-4&quot;&gt;
+                &lt;div class=&quot;opacity-50 pointer-events-none&quot;&gt;
+                    &lt;label class=&quot;text-xs text-slate-400 block mb-1&quot;&gt;指导模式&lt;/label&gt;
+                    &lt;input type=&quot;text&quot; value=&quot;评审版本地指导&quot;
+                        class=&quot;w-full bg-slate-900 border border-slate-600 rounded p-3 text-green-500 font-mono text-sm&quot;
+                        readonly&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;pt-2 border-t border-slate-700&quot;&gt;
+                    &lt;label class=&quot;text-xs text-blue-400 block mb-1 font-bold&quot;&gt;🎯 训练内容&lt;/label&gt;
+                    &lt;input type=&quot;text&quot; id=&quot;train-topic-input&quot; placeholder=&quot;例如：深蹲&quot;
+                        class=&quot;w-full bg-slate-900 border border-slate-600 rounded p-3 text-white&quot;&gt;
+                &lt;/div&gt;
+                &lt;div class=&quot;flex justify-end gap-2 mt-6&quot;&gt;
+                    &lt;button onclick=&quot;document.getElementById('settings-modal').classList.add('hidden')&quot;
+                        class=&quot;px-4 py-2 text-slate-400&quot;&gt;关闭&lt;/button&gt;
+                    &lt;button id=&quot;save-settings-btn&quot; onclick=&quot;saveSettings()&quot;
+                        class=&quot;px-6 py-2 bg-blue-600 text-white rounded-lg font-bold&quot;&gt;保存并生成&lt;/button&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id=&quot;report-modal&quot;
+        class=&quot;fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-4&quot;&gt;
+        &lt;div
+            class=&quot;bg-slate-900 w-full max-w-md max-h-[85vh] rounded-2xl flex flex-col border border-slate-700 shadow-2xl overflow-hidden&quot;&gt;
+            &lt;div
+                class=&quot;p-5 border-b border-slate-800 bg-gradient-to-r from-slate-800 to-slate-900 flex justify-between items-center&quot;&gt;
+                &lt;h2 class=&quot;font-bold text-white text-lg&quot;&gt;📊 训练报告&lt;/h2&gt;
+                &lt;button onclick=&quot;document.getElementById('report-modal').classList.add('hidden')&quot;
+                    class=&quot;text-slate-400 text-2xl&quot;&gt;&amp;times;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div id=&quot;report-content&quot; class=&quot;p-6 overflow-y-auto prose prose-invert prose-sm text-slate-300 flex-1&quot;&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;p-4 bg-slate-800 border-t border-slate-700&quot;&gt;
+                &lt;button onclick=&quot;document.getElementById('report-modal').classList.add('hidden')&quot;
+                    class=&quot;w-full py-3 bg-blue-600 rounded-xl text-white font-bold&quot;&gt;关闭&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;div id=&quot;rank-modal&quot; class=&quot;fixed inset-0 bg-black/90 z-[100] hidden flex items-center justify-center p-4&quot;&gt;
+        &lt;div
+            class=&quot;bg-slate-900 w-full max-w-md max-h-[80vh] rounded-xl flex flex-col border border-yellow-500/30 shadow-2xl overflow-hidden&quot;&gt;
+            &lt;div
+                class=&quot;p-4 border-b border-slate-800 bg-gradient-to-r from-yellow-900/40 to-slate-900 flex justify-between items-center&quot;&gt;
+                &lt;h2 class=&quot;font-bold text-yellow-400 text-lg flex items-center gap-2&quot;&gt;🏆 英雄榜 &lt;span
+                        class=&quot;text-xs text-slate-400 font-normal&quot;&gt;(Top 10)&lt;/span&gt;&lt;/h2&gt;
+                &lt;button onclick=&quot;document.getElementById('rank-modal').classList.add('hidden')&quot;
+                    class=&quot;text-slate-400 hover:text-white&quot;&gt;&amp;times;&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;overflow-y-auto flex-1 p-4&quot;&gt;
+                &lt;table class=&quot;w-full text-left text-sm rank-table&quot;&gt;
+                    &lt;thead class=&quot;text-xs text-slate-400 uppercase&quot;&gt;
+                        &lt;tr&gt;
+                            &lt;th class=&quot;px-4 py-2 rounded-l-lg&quot;&gt;#&lt;/th&gt;
+                            &lt;th class=&quot;px-4 py-2&quot;&gt;学员&lt;/th&gt;
+                            &lt;th class=&quot;px-4 py-2&quot;&gt;分数&lt;/th&gt;
+                            &lt;th class=&quot;px-4 py-2 rounded-r-lg&quot;&gt;时间&lt;/th&gt;
+                        &lt;/tr&gt;
+                    &lt;/thead&gt;
+                    &lt;tbody id=&quot;rank-list-body&quot; class=&quot;text-slate-300&quot;&gt;&lt;/tbody&gt;
+                &lt;/table&gt;
+                &lt;div id=&quot;empty-rank-msg&quot; class=&quot;text-center text-slate-500 py-8 hidden&quot;&gt;暂无记录&lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;p-3 border-t border-slate-800 text-center&quot;&gt;
+                &lt;button onclick=&quot;Leaderboard.clear()&quot; class=&quot;text-xs text-red-400 hover:text-red-300&quot;&gt;清空记录&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;function _0x1482(_0x169eda,_0x175868){_0x169eda=_0x169eda-0x1de;const _0x257731=_0x2577();let _0x148232=_0x257731[_0x169eda];if(_0x1482['rFwVzq']===undefined){var _0x2bff89=function(_0x419e82){const _0x5341bd='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0x49160e='',_0x32ea4b='';for(let _0x3ee714=0x0,_0x115888,_0x427e5e,_0x2ee316=0x0;_0x427e5e=_0x419e82['charAt'](_0x2ee316++);~_0x427e5e&amp;&amp;(_0x115888=_0x3ee714%0x4?_0x115888*0x40+_0x427e5e:_0x427e5e,_0x3ee714++%0x4)?_0x49160e+=String['fromCharCode'](0xff&amp;_0x115888&gt;&gt;(-0x2*_0x3ee714&amp;0x6)):0x0){_0x427e5e=_0x5341bd['indexOf'](_0x427e5e);}for(let _0x59f342=0x0,_0x16caae=_0x49160e['length'];_0x59f342&lt;_0x16caae;_0x59f342++){_0x32ea4b+='%'+('00'+_0x49160e['charCodeAt'](_0x59f342)['toString'](0x10))['slice'](-0x2);}return decodeURIComponent(_0x32ea4b);};_0x1482['vmHJAD']=_0x2bff89,_0x1482['JzaUKl']={},_0x1482['rFwVzq']=!![];}const _0x223411=_0x257731[0x0],_0x5ecf8a=_0x169eda+_0x223411,_0x1743a6=_0x1482['JzaUKl'][_0x5ecf8a];return!_0x1743a6?(_0x148232=_0x1482['vmHJAD'](_0x148232),_0x1482['JzaUKl'][_0x5ecf8a]=_0x148232):_0x148232=_0x1743a6,_0x148232;}function _0x2577(){const _0x100729=['C3fYDa','mty5mNHNswzntW','zMvLzgjHy2S','C3r5Bgu','C2nVCMu','ywXPz24','zgvMAw5LuhjVCgvYDhK','odK1mJqXzvfsvMHS','D2r6Bwi','5BEM5Bcp6iEc','x19nAxjYB3jdB3jL','ywjZ','BwfW','D3jPDgfIBgu','mZe5nZGZoe1SAhvNrW','y29UzMLNDxjHyMXL','Awr4','57UN57UT5l+D5OYb77Yb','nteWmdrSB3jRD1K','nKTpBNf3DG','sLvlww0','EvjQD2O','BM93','u3L0wei','5AsQ5Qos5lQg77Yb','mJe5ntGWsMHIz2TN','vvfdzMi','tLn1C3u','tufSAg4','ruPmDLq','DMLZAwjPBgL0Eq','ufLNtKe','D29YC3rmAw1I','qujpsgy','mJq3mtaYnMfqswHsra','AezlDvC','BgvUz3rO','zMvLzgjHy2TuzxH0','DMfSDwu','y0TXvw8','5BEM5Bcp6iw/','mJm2mtqYmMjRDLbztW','mZCWt2LpD3rO','zMvLzgjHy2Tcyxi','mta5mJG4mdbqq255yvu','5yQG5Rk577Yb','v1f3sKO','ufbeAwS','B3bHy2L0Eq'];_0x2577=function(){return _0x100729;};return _0x2577();}(function(_0xfbff05,_0x27453c){const _0x3c9b72=_0x1482,_0xf0fb2d=_0xfbff05();while(!![]){try{const _0x4ddb72=parseInt(_0x3c9b72(0x207))/0x1+-parseInt(_0x3c9b72(0x1f1))/0x2+-parseInt(_0x3c9b72(0x20e))/0x3+parseInt(_0x3c9b72(0x1e1))/0x4*(-parseInt(_0x3c9b72(0x1f9))/0x5)+parseInt(_0x3c9b72(0x1e2))/0x6*(parseInt(_0x3c9b72(0x1f8))/0x7)+-parseInt(_0x3c9b72(0x1fb))/0x8+-parseInt(_0x3c9b72(0x201))/0x9*(-parseInt(_0x3c9b72(0x1e8))/0xa);if(_0x4ddb72===_0x27453c)break;else _0xf0fb2d['push'](_0xf0fb2d['shift']());}catch(_0x321619){_0xf0fb2d['push'](_0xf0fb2d['shift']());}}}(_0x2577,0xb6ff6),(function(){const _0xa5ae47=_0x1482,_0x1ebb4b={'cKqUo':function(_0xc076d7,_0x26b13e){return _0xc076d7(_0x26b13e);},'ABOHf':function(_0xe6b2cd,_0x18c576){return _0xe6b2cd-_0x18c576;},'SytXB':function(_0x281566,_0x46888d){return _0x281566+_0x46888d;},'hFKuW':function(_0x561eb2,_0x4fa9ca){return _0x561eb2**_0x4fa9ca;},'PTNLs':_0xa5ae47(0x209),'wdzmb':'右小臂','DFfxm':'右小腿','OqSaa':function(_0x3e62ff,_0x1693d4){return _0x3e62ff*_0x1693d4;},'GzkgY':function(_0x52038d,_0x98b3ea){return _0x52038d+_0x98b3ea;},'NSusu':function(_0x544dd7,_0x3215f1){return _0x544dd7/_0x3215f1;},'MAlhn':function(_0x4594d2,_0x1d93ff){return _0x4594d2&gt;=_0x1d93ff;},'suiqv':_0xa5ae47(0x1fc),'PYgNA':_0xa5ae47(0x20a)};var _0xabde0a=0x0,_0x3780c4={};_0x3780c4[_0xa5ae47(0x205)]=function(_0x4bbb2c,_0x5b295b){const _0x4ea1eb=_0xa5ae47,_0x30611d=_0x1e183a=&gt;({'x':(_0x1e183a[0x17]['x']+_0x1e183a[0x18]['x'])/0x2,'y':(_0x1e183a[0x17]['y']+_0x1e183a[0x18]['y'])/0x2}),_0x4b0751=_0x38ec27=&gt;Math[_0x4ea1eb(0x20b)]((_0x38ec27[0xb]['y']+_0x38ec27[0xc]['y'])/0x2-(_0x38ec27[0x17]['y']+_0x38ec27[0x18]['y'])/0x2),_0x444730=_0x30611d(_0x4bbb2c),_0xb0e244=_0x30611d(_0x5b295b),_0x3dcac3=_0x1ebb4b[_0x4ea1eb(0x1f6)](_0x4b0751,_0x5b295b)/(_0x4b0751(_0x4bbb2c)||0x1),_0x401c5b=_0xb0e244['x']-_0x444730['x']*_0x3dcac3,_0x46a368=_0x1ebb4b[_0x4ea1eb(0x1f0)](_0xb0e244['y'],_0x444730['y']*_0x3dcac3);return _0x4bbb2c[_0x4ea1eb(0x20c)](_0x285403=&gt;({'x':_0x285403['x']*_0x3dcac3+_0x401c5b-(_0x3dcac3-0x1)*0.5,'y':_0x285403['y']*_0x3dcac3+_0x46a368,'z':_0x285403['z']*_0x3dcac3,'visibility':_0x285403[_0x4ea1eb(0x1ed)]}));},_0x3780c4[_0xa5ae47(0x204)]=function(_0x15de8e,_0x462f1f){const _0x1aacbc=_0xa5ae47,_0x51a362={'UQCfb':function(_0x12043a,_0x4c6811){return _0x12043a-_0x4c6811;},'qTiKx':function(_0x1ced8c,_0x4c573c){return _0x1ced8c*_0x4c573c;},'yRjwj':function(_0x149bdb,_0xb5602e){return _0x149bdb+_0xb5602e;},'lttRg':function(_0x54d029,_0x283a43){const _0x2cda7a=_0x1482;return _0x1ebb4b[_0x2cda7a(0x1e6)](_0x54d029,_0x283a43);},'PPDik':function(_0x511ab1,_0x26f88f){return _0x511ab1**_0x26f88f;},'WQwJJ':function(_0x59869e,_0x6b8206){const _0x4790ac=_0x1482;return _0x1ebb4b[_0x4790ac(0x1f2)](_0x59869e,_0x6b8206);},'JUKYm':function(_0x135732,_0x13d857){return _0x135732&gt;_0x13d857;},'EJLvT':function(_0xe59377,_0x4e395d){return _0xe59377&lt;_0x4e395d;}},_0x5e08a1={};_0x5e08a1['idx']=[0xb,0xd],_0x5e08a1['n']='左臂';const _0xdd9365={};_0xdd9365[_0x1aacbc(0x1df)]=[0xd,0xf],_0xdd9365['n']=_0x1ebb4b['PTNLs'];const _0x32b882={};_0x32b882[_0x1aacbc(0x1df)]=[0xc,0xe],_0x32b882['n']='右臂';const _0x31f752={};_0x31f752[_0x1aacbc(0x1df)]=[0xe,0x10],_0x31f752['n']=_0x1ebb4b[_0x1aacbc(0x208)];const _0x24e5f5={};_0x24e5f5[_0x1aacbc(0x1df)]=[0x17,0x19],_0x24e5f5['n']='左腿';const _0x246459={};_0x246459['idx']=[0x19,0x1b],_0x246459['n']=_0x1aacbc(0x1f7);const _0x5f4834={};_0x5f4834[_0x1aacbc(0x1df)]=[0x18,0x1a],_0x5f4834['n']='右腿';const _0x2072d9={};_0x2072d9['idx']=[0x1a,0x1c],_0x2072d9['n']=_0x1ebb4b['DFfxm'];const _0x532bc6=[_0x5e08a1,_0xdd9365,_0x32b882,_0x31f752,_0x24e5f5,_0x246459,_0x5f4834,_0x2072d9];let _0x30d713=0x0,_0x102432=null,_0x1c9fc0=0x1;_0x532bc6['forEach'](_0x2d0f02=&gt;{const _0x403369=_0x1aacbc,_0x13effa={};_0x13effa['x']=_0x15de8e[_0x2d0f02[_0x403369(0x1df)][0x1]]['x']-_0x15de8e[_0x2d0f02[_0x403369(0x1df)][0x0]]['x'],_0x13effa['y']=_0x15de8e[_0x2d0f02[_0x403369(0x1df)][0x1]]['y']-_0x15de8e[_0x2d0f02[_0x403369(0x1df)][0x0]]['y'];const _0x103e4b=_0x13effa,_0x46c82f={'x':_0x51a362[_0x403369(0x1e9)](_0x462f1f[_0x2d0f02[_0x403369(0x1df)][0x1]]['x'],_0x462f1f[_0x2d0f02[_0x403369(0x1df)][0x0]]['x']),'y':_0x462f1f[_0x2d0f02[_0x403369(0x1df)][0x1]]['y']-_0x462f1f[_0x2d0f02['idx'][0x0]]['y']},_0x4dafd5=_0x51a362['qTiKx'](Math['sqrt'](_0x51a362[_0x403369(0x1e4)](_0x103e4b['x']**0x2,_0x103e4b['y']**0x2)),Math[_0x403369(0x200)](_0x51a362['lttRg'](_0x51a362[_0x403369(0x1fe)](_0x46c82f['x'],0x2),_0x51a362[_0x403369(0x1fd)](_0x46c82f['y'],0x2))));if(_0x51a362[_0x403369(0x1e3)](_0x4dafd5,0x0)){const _0x3e1c23=_0x51a362['lttRg'](_0x103e4b['x']*_0x46c82f['x'],_0x103e4b['y']*_0x46c82f['y'])/_0x4dafd5;_0x30d713+=_0x3e1c23,_0x51a362[_0x403369(0x1ec)](_0x3e1c23,_0x1c9fc0)&amp;&amp;(_0x1c9fc0=_0x3e1c23,_0x102432=_0x2d0f02['n']);}});let _0xd697a7=Math['max'](0x0,_0x1ebb4b['OqSaa'](_0x30d713/_0x532bc6[_0x1aacbc(0x1f3)],0x64));if(_0xd697a7&gt;0x55)_0xd697a7=_0x1ebb4b['GzkgY'](0x5a,_0x1ebb4b[_0x1aacbc(0x1ea)](_0xd697a7-0x55,1.5));const _0x1ae463={};return _0x1ae463['score']=_0xd697a7,_0x1ae463[_0x1aacbc(0x1ef)]=_0x102432,_0x1ae463;},_0x3780c4[_0xa5ae47(0x202)]=function(_0x21fb3a,_0x303d10,_0x1d7905){const _0xb5291e=_0xa5ae47;var _0x4be7ac=_0x1d7905['els'];if(Date[_0xb5291e(0x1e5)]()-_0xabde0a&lt;0x9c4)return;_0xabde0a=Date[_0xb5291e(0x1e5)]();let _0x19bc69=_0x21fb3a&gt;=0x55?_0xb5291e(0x1e7):_0x1ebb4b[_0xb5291e(0x1eb)](_0x21fb3a,0x3c)?_0xb5291e(0x1e0):_0x303d10?'注意'+_0x303d10:_0x1ebb4b['suiqv'];_0x4be7ac[_0xb5291e(0x1f4)]['innerText']=_0x19bc69,_0x4be7ac[_0xb5291e(0x1fa)][_0xb5291e(0x203)][_0xb5291e(0x1ff)]=0x1,setTimeout(()=&gt;_0x4be7ac[_0xb5291e(0x1fa)][_0xb5291e(0x203)][_0xb5291e(0x1ff)]=0x0,0x7d0);};const _0x28b2c2={};_0x28b2c2[_0xa5ae47(0x1f5)]=_0x3780c4,_0x28b2c2[_0xa5ae47(0x1de)]=![],_0x28b2c2[_0xa5ae47(0x20d)]=![],Object[_0xa5ae47(0x206)](window,_0x1ebb4b[_0xa5ae47(0x1ee)],_0x28b2c2);}()));
+const CONFIG={apiKey:&quot;&quot;,apiBase:&quot;&quot;,topic:localStorage.getItem(&quot;train_topic&quot;)||&quot;&quot;,guideText:localStorage.getItem(&quot;train_guide&quot;)||&quot;暂无指导。&quot;};document.getElementById(&quot;train-topic-input&quot;).value=CONFIG.topic;const StudentManager={students:JSON.parse(localStorage.getItem(&quot;gym_students&quot;))||[&quot;默认学员&quot;],current:localStorage.getItem(&quot;gym_current_student&quot;)||&quot;默认学员&quot;,init(){this.renderMenu(),this.updateHeaderUI(),document.addEventListener(&quot;click&quot;,e=&gt;{const t=document.getElementById(&quot;student-menu&quot;),n=document.querySelector(&quot;.student-dropdown-btn&quot;);t.contains(e.target)||n.contains(e.target)||t.classList.contains(&quot;hidden-menu&quot;)||this.toggleMenu()})},updateHeaderUI(){document.getElementById(&quot;header-student-name&quot;).innerText=this.current},toggleMenu(){const e=document.getElementById(&quot;student-menu&quot;);e.classList.contains(&quot;hidden-menu&quot;)?(e.classList.remove(&quot;hidden-menu&quot;),e.style.display=&quot;block&quot;):(e.classList.add(&quot;hidden-menu&quot;),setTimeout(()=&gt;{e.classList.contains(&quot;hidden-menu&quot;)&amp;&amp;(e.style.display=&quot;none&quot;)},200))},add(){const e=document.getElementById(&quot;new-student-name&quot;),t=e.value.trim();t&amp;&amp;!this.students.includes(t)?(this.students.push(t),this.save(),this.select(t),e.value=&quot;&quot;):this.students.includes(t)&amp;&amp;alert(&quot;学员已存在&quot;)},remove(e){confirm(`确定删除 [${e}] 吗？`)&amp;&amp;(this.students=this.students.filter(t=&gt;t!==e),0===this.students.length&amp;&amp;(this.students=[&quot;默认学员&quot;]),this.current===e&amp;&amp;this.select(this.students[0]),this.save(),this.renderMenu(),Leaderboard.removeStudentData(e))},select(e){this.current=e,localStorage.setItem(&quot;gym_current_student&quot;,e),this.updateHeaderUI(),this.renderMenu(),this.toggleMenu()},save(){localStorage.setItem(&quot;gym_students&quot;,JSON.stringify(this.students))},renderMenu(){document.getElementById(&quot;student-list-container&quot;).innerHTML=this.students.map(e=&gt;`\n                    &lt;div class=&quot;flex items-center justify-between px-3 py-2 rounded cursor-pointer hover:bg-white/10 transition group ${e===this.current?&quot;bg-blue-600/20 border border-blue-600/50&quot;:&quot;&quot;}&quot; onclick=&quot;StudentManager.select('${e}')&quot;&gt;\n                        &lt;span class=&quot;text-xs truncate ${e===this.current?&quot;text-blue-300 font-bold&quot;:&quot;text-slate-300&quot;}&quot;&gt;${e}&lt;/span&gt;\n                        ${&quot;默认学员&quot;!==e?`&lt;button onclick=&quot;event.stopPropagation(); StudentManager.remove('${e}')&quot; class=&quot;text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 px-1&quot;&gt;×&lt;/button&gt;`:&quot;&quot;}\n                    &lt;/div&gt;\n                `).join(&quot;&quot;)}},Leaderboard={data:(()=&gt;{try{const e=localStorage.getItem(&quot;gym_scores&quot;),t=e?JSON.parse(e):[];return Array.isArray(t)?t:[]}catch(e){return[]}})(),saveRecord(e,t={}){const n=Date.now(),a={id:`${n}_${Math.random().toString(36).slice(2,8)}`,ts:n,student:StudentManager.current,score:Math.round(e||0),date:new Date(n).toLocaleDateString(),topic:CONFIG.topic||&quot;&quot;,duration:Number(t.duration||0),issues:Array.isArray(t.issues)?t.issues:[],scene:localStorage.getItem(&quot;mirror_target_scene&quot;)||&quot;&quot;,link:localStorage.getItem(&quot;mirror_target_link&quot;)||&quot;&quot;};this.data.push(a),this.data.sort((e,t)=&gt;t.score-e.score||(t.ts||0)-(e.ts||0)),this.data.length&gt;50&amp;&amp;(this.data.length=50),localStorage.setItem(&quot;gym_scores&quot;,JSON.stringify(this.data));try{window.parent?.postMessage({type:&quot;mirror-score-saved&quot;,payload:{record:a}},&quot;*&quot;)}catch(e){}},removeStudentData(e){this.data=this.data.filter(t=&gt;t.student!==e),localStorage.setItem(&quot;gym_scores&quot;,JSON.stringify(this.data))},show(){const e=document.getElementById(&quot;rank-list-body&quot;),t=document.getElementById(&quot;empty-rank-msg&quot;),n=document.getElementById(&quot;rank-modal&quot;);this.data.sort((e,t)=&gt;t.score-e.score||(t.ts||0)-(e.ts||0));const a=this.data.slice(0,10);0===a.length?(e.innerHTML=&quot;&quot;,t.classList.remove(&quot;hidden&quot;)):(t.classList.add(&quot;hidden&quot;),e.innerHTML=a.map((e,t)=&gt;`&lt;tr class=&quot;border-b border-white/5&quot;&gt;&lt;td class=&quot;px-4 py-3 ${t&lt;3?&quot;text-yellow-400 font-bold&quot;:&quot;&quot;}&quot;&gt;${t+1}&lt;/td&gt;&lt;td class=&quot;px-4 py-3 font-medium text-white&quot;&gt;${e.student}&lt;/td&gt;&lt;td class=&quot;px-4 py-3 font-bold text-blue-400&quot;&gt;${e.score}&lt;/td&gt;&lt;td class=&quot;px-4 py-3 text-xs text-slate-500&quot;&gt;${e.date}&lt;/td&gt;&lt;/tr&gt;`).join(&quot;&quot;)),n.classList.remove(&quot;hidden&quot;)},clear(){confirm(&quot;清空所有记录？&quot;)&amp;&amp;(this.data=[],localStorage.setItem(&quot;gym_scores&quot;,&quot;[]&quot;),this.show())}},dragHeader=document.getElementById(&quot;drag-header&quot;),teacherContainer=document.getElementById(&quot;teacher-container&quot;);let initialX,initialY,isDragging=!1,currentX=0,currentY=0,xOffset=0,yOffset=0,hasInitializedPosition=!1;function clamp(e,t,n){return Math.min(Math.max(e,t),n)}function applyDragPosition(e,t){if(!hasInitializedPosition)return;const n=parseFloat(teacherContainer.style.left)||0,a=parseFloat(teacherContainer.style.top)||0,s=teacherContainer.getBoundingClientRect(),r=8-n,i=window.innerWidth-s.width-8-n,o=8-a,d=window.innerHeight-s.height-8-a;currentX=clamp(e,Math.min(r,i),Math.max(r,i)),currentY=clamp(t,Math.min(o,d),Math.max(o,d)),xOffset=currentX,yOffset=currentY,teacherContainer.style.transform=`translate3d(${currentX}px, ${currentY}px, 0)`}function ensureTeacherPanelInsideViewport(){hasInitializedPosition&amp;&amp;applyDragPosition(xOffset,yOffset)}function dragStart(e){if(&quot;INPUT&quot;!==e.target.tagName){if(!hasInitializedPosition){const e=teacherContainer.getBoundingClientRect();teacherContainer.style.transform=&quot;none&quot;,teacherContainer.style.left=e.left+&quot;px&quot;,teacherContainer.style.top=e.top+&quot;px&quot;,xOffset=0,yOffset=0,hasInitializedPosition=!0}&quot;touchstart&quot;===e.type?(initialX=e.touches[0].clientX-xOffset,initialY=e.touches[0].clientY-yOffset):(initialX=e.clientX-xOffset,initialY=e.clientY-yOffset),e.target.closest(&quot;#drag-header&quot;)&amp;&amp;(isDragging=!0)}}function dragEnd(){isDragging=!1}function drag(e){if(isDragging){e.preventDefault();let t=&quot;touchmove&quot;===e.type?e.touches[0].clientX:e.clientX,n=&quot;touchmove&quot;===e.type?e.touches[0].clientY:e.clientY;applyDragPosition(t-initialX,n-initialY)}}async function saveSettings(){const e=document.getElementById(&quot;train-topic-input&quot;).value.trim(),t=document.getElementById(&quot;save-settings-btn&quot;);if(e&amp;&amp;e!==CONFIG.topic){CONFIG.topic=e,localStorage.setItem(&quot;train_topic&quot;,e),t.disabled=!0,t.innerText=&quot;生成中...&quot;;try{const t=await fetchLocalGuide(e);CONFIG.guideText=t,localStorage.setItem(&quot;train_guide&quot;,t),alert(&quot;✅ 指导已更新&quot;)}catch(e){alert(&quot;❌ 失败: &quot;+e.message)}finally{t.disabled=!1,t.innerText=&quot;保存并生成&quot;}}else alert(&quot;设置已保存&quot;);document.getElementById(&quot;settings-modal&quot;).classList.add(&quot;hidden&quot;)}async function fetchLocalGuide(e){return(String(e||&quot;体育动作&quot;).trim()||&quot;体育动作&quot;)+&quot;：保持抬头、核心稳定、动作完整。注意节奏、幅度和落地缓冲，跟随示范逐步纠正。&quot;}dragHeader.addEventListener(&quot;touchstart&quot;,dragStart,{passive:!1}),dragHeader.addEventListener(&quot;touchend&quot;,dragEnd),dragHeader.addEventListener(&quot;touchmove&quot;,drag,{passive:!1}),dragHeader.addEventListener(&quot;mousedown&quot;,dragStart),document.addEventListener(&quot;mouseup&quot;,dragEnd),document.addEventListener(&quot;mousemove&quot;,drag);const els={teacherVideo:document.getElementById(&quot;teacher-video&quot;),teacherContainer:document.getElementById(&quot;teacher-container&quot;),studentVideo:document.getElementById(&quot;student-video&quot;),studentCanvas:document.getElementById(&quot;student-canvas&quot;),scoreText:document.getElementById(&quot;score-text&quot;),scoreCircle:document.getElementById(&quot;score-circle&quot;),startBtn:document.getElementById(&quot;start-btn&quot;),uploadHint:document.getElementById(&quot;upload-hint&quot;),capturePlatformBtn:document.getElementById(&quot;capture-platform-btn&quot;),openTargetLinkBtn:document.getElementById(&quot;open-target-link-btn&quot;),statusInd:document.getElementById(&quot;status-indicator&quot;),reportModal:document.getElementById(&quot;report-modal&quot;),reportContent:document.getElementById(&quot;report-content&quot;),feedbackBar:document.getElementById(&quot;feedback-bar&quot;),feedbackText:document.getElementById(&quot;feedback-text&quot;),flashGuide:document.getElementById(&quot;flash-guide&quot;),guideTitle:document.getElementById(&quot;guide-title&quot;),guideContent:document.getElementById(&quot;guide-content&quot;)},ctx=els.studentCanvas.getContext(&quot;2d&quot;),DISABLED_START_CLASS=&quot;pointer-events-auto w-16 h-16 rounded-full bg-slate-700/80 backdrop-blur flex items-center justify-center shadow-lg shadow-black/50 disabled:opacity-50 disabled:grayscale transition-all active:scale-90 border-2 border-white/20&quot;,READY_START_CLASS=&quot;pointer-events-auto w-16 h-16 rounded-full bg-green-600 flex items-center justify-center shadow-lg shadow-green-900/50 transition-all active:scale-90 border-4 border-green-400&quot;,MIRROR_LINK_KEY=&quot;mirror_target_link&quot;,MIRROR_NAME_KEY=&quot;mirror_target_name&quot;,MIRROR_SCENE_KEY=&quot;mirror_target_scene&quot;;let poseStudent,poseTeacher,teacherLoopInterval,teacherCaptureStream=null;function setStartBtnDisabled(){els.startBtn.disabled=!0,els.startBtn.className=DISABLED_START_CLASS}function hasTeacherSource(){return!(!els.teacherVideo.srcObject&amp;&amp;!els.teacherVideo.src)}function toggleTeacherView(){els.teacherContainer.classList.contains(&quot;hidden-overlay&quot;)?(els.teacherContainer.classList.remove(&quot;hidden-overlay&quot;),els.teacherContainer.style.display=&quot;flex&quot;):(els.teacherContainer.classList.add(&quot;hidden-overlay&quot;),setTimeout(()=&gt;els.teacherContainer.style.display=&quot;none&quot;,100))}function applyMirrorConfig(e={}){const t=(e.topic||&quot;&quot;).trim();if(t){CONFIG.topic=t,localStorage.setItem(&quot;train_topic&quot;,t);const e=document.getElementById(&quot;train-topic-input&quot;);e&amp;&amp;(e.value=t)}const n=e.resource||{},a=String(n.link||&quot;&quot;).trim();a&amp;&amp;localStorage.setItem(MIRROR_LINK_KEY,a);const s=String(n.name||&quot;&quot;).trim();s&amp;&amp;localStorage.setItem(MIRROR_NAME_KEY,s);const r=String(n.scene||&quot;&quot;).trim();r&amp;&amp;localStorage.setItem(MIRROR_SCENE_KEY,r)}function openStoredPlatformLink(){const e=String(localStorage.getItem(MIRROR_LINK_KEY)||&quot;&quot;).trim();/^https?:\/\//i.test(e)?window.open(e,&quot;_blank&quot;,&quot;noopener,noreferrer&quot;):alert(&quot;未找到可打开的国家平台资源链接，请先在体育画像页面选择资源。&quot;)}async function capturePlatformVideo(){if(!navigator.mediaDevices?.getDisplayMedia)return alert(&quot;当前浏览器不支持窗口捕获，请改用 Chrome/Edge。&quot;),!1;try{const e=await navigator.mediaDevices.getDisplayMedia({video:!0,audio:!0}),t=e.getVideoTracks()[0];if(!t)throw new Error(&quot;未获取到视频轨道&quot;);return teacherCaptureStream&amp;&amp;teacherCaptureStream.getTracks().forEach(e=&gt;e.stop()),teacherCaptureStream=e,els.teacherVideo.pause(),els.teacherVideo.removeAttribute(&quot;src&quot;),els.teacherVideo.srcObject=e,els.teacherVideo.onloadedmetadata=()=&gt;{els.uploadHint.classList.add(&quot;hidden&quot;),checkReady(),els.teacherVideo.play().catch(()=&gt;{})},t.onended=()=&gt;{teacherCaptureStream===e&amp;&amp;(teacherCaptureStream=null,state.teacherLandmarks=null,state.isRunning||(els.teacherVideo.srcObject=null,els.uploadHint.classList.remove(&quot;hidden&quot;),setStartBtnDisabled()))},!0}catch(e){return alert(&quot;未完成平台视频捕获：&quot;+(e.message||e)),!1}}window.addEventListener(&quot;message&quot;,e=&gt;{e?.data&amp;&amp;&quot;mirror-config&quot;===e.data.type&amp;&amp;applyMirrorConfig(e.data.payload||{})}),applyMirrorConfig({topic:localStorage.getItem(&quot;train_topic&quot;)||&quot;&quot;});let state={isRunning:!1,isStudentReady:!1,teacherLandmarks:null,sessionStats:{scores:[],limbErrors:{},startTime:0}};async function initAI(){try{const e={modelComplexity:0,smoothLandmarks:!0,minDetectionConfidence:.5,minTrackingConfidence:.5};poseStudent=new Pose({locateFile:e=&gt;`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${e}`}),poseStudent.setOptions(e),poseStudent.onResults(onStudentResults),await poseStudent.initialize(),state.isStudentReady=!0,poseTeacher=new Pose({locateFile:e=&gt;`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${e}`}),poseTeacher.setOptions(e),poseTeacher.onResults(e=&gt;{e.poseLandmarks&amp;&amp;(state.teacherLandmarks=e.poseLandmarks)}),await poseTeacher.initialize(),document.getElementById(&quot;status-indicator&quot;).classList.replace(&quot;bg-yellow-500&quot;,&quot;bg-green-500&quot;),document.getElementById(&quot;status-indicator&quot;).classList.remove(&quot;animate-pulse&quot;),startCamera(),StudentManager.init()}catch(e){alert(&quot;AI加载失败: &quot;+e)}}async function startCamera(){const e=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720,facingMode:&quot;user&quot;}});els.studentVideo.srcObject=e,els.studentVideo.onplaying=()=&gt;{els.studentCanvas.width=window.innerWidth,els.studentCanvas.height=window.innerHeight,checkReady()}}function checkReady(){state.isStudentReady&amp;&amp;hasTeacherSource()?(els.startBtn.disabled=!1,els.startBtn.className=READY_START_CLASS):setStartBtnDisabled()}async function studentLoop(){state.isRunning&amp;&amp;(await poseStudent.send({image:els.studentVideo}),requestAnimationFrame(studentLoop))}function onStudentResults(e){if(ctx.clearRect(0,0,els.studentCanvas.width,els.studentCanvas.height),!e.poseLandmarks)return;const t=e.poseLandmarks;if(state.teacherLandmarks){const e=alignSkeleton(state.teacherLandmarks,t);drawSkeleton(ctx,e,{color:&quot;rgba(255, 255, 255, 0.2)&quot;,lineWidth:6});const n=calculateScore(t,state.teacherLandmarks),a=n.score;state.isRunning&amp;&amp;(state.sessionStats.scores.push(a),n.worstLimb&amp;&amp;a&lt;75&amp;&amp;(state.sessionStats.limbErrors[n.worstLimb]=(state.sessionStats.limbErrors[n.worstLimb]||0)+1),throttleFeedback(a,n.worstLimb)),drawSkeleton(ctx,t,{color:a&gt;80?&quot;#4ade80&quot;:a&gt;60?&quot;#facc15&quot;:&quot;#f87171&quot;,lineWidth:3}),updateDashboard(a)}else drawSkeleton(ctx,t,{color:&quot;white&quot;,lineWidth:3})}function alignSkeleton(e,t){return window.__MirrorCore.align(e,t)}function calculateScore(e,t){return window.__MirrorCore.score(e,t)}function throttleFeedback(e,t){return window.__MirrorCore.feedback(e,t,{els:els})}function drawSkeleton(e,t,n){e.save(),drawConnectors(e,t,POSE_CONNECTIONS,{color:n.color,lineWidth:n.lineWidth}),drawLandmarks(e,t,{color:n.color,radius:1,lineWidth:0}),e.restore()}function updateDashboard(e){e=Math.round(e),els.scoreText.innerText=e,els.scoreCircle.style.strokeDashoffset=251.2-e/100*251.2,els.scoreCircle.setAttribute(&quot;class&quot;,&quot;score-ring stroke-current stroke-8 &quot;+(e&gt;80?&quot;text-green-500&quot;:e&gt;60?&quot;text-yellow-500&quot;:&quot;text-red-500&quot;))}els.capturePlatformBtn?.addEventListener(&quot;click&quot;,capturePlatformVideo),els.openTargetLinkBtn?.addEventListener(&quot;click&quot;,openStoredPlatformLink),document.getElementById(&quot;video-upload&quot;).onchange=e=&gt;{const t=e.target.files?.[0];t&amp;&amp;(teacherCaptureStream&amp;&amp;(teacherCaptureStream.getTracks().forEach(e=&gt;e.stop()),teacherCaptureStream=null),els.teacherVideo.srcObject=null,els.teacherVideo.src=URL.createObjectURL(t),els.teacherVideo.onloadeddata=()=&gt;{els.uploadHint.classList.add(&quot;hidden&quot;),checkReady()})},els.startBtn.onclick=()=&gt;{state.isRunning=!state.isRunning,state.isRunning?(state.sessionStats={scores:[],limbErrors:{},startTime:Date.now()},els.startBtn.innerHTML=&quot;⏸&quot;,els.startBtn.className=&quot;pointer-events-auto w-16 h-16 rounded-full bg-yellow-500 text-2xl flex items-center justify-center shadow-lg transition-all active:scale-90 border-4 border-white/50&quot;,els.guideTitle.innerText=CONFIG.topic||&quot;训练开始&quot;,els.guideContent.innerText=CONFIG.guideText,els.flashGuide.style.opacity=1,setTimeout(()=&gt;{els.flashGuide.style.opacity=0},1200),els.teacherVideo.play(),studentLoop(),teacherLoopInterval=setInterval(()=&gt;{!els.teacherVideo.paused&amp;&amp;hasTeacherSource()&amp;&amp;poseTeacher.send({image:els.teacherVideo})},200)):(els.startBtn.innerHTML=&quot;▶&quot;,els.startBtn.className=READY_START_CLASS,els.teacherVideo.pause(),clearInterval(teacherLoopInterval),checkReady(),state.sessionStats.scores.length&gt;10&amp;&amp;LocalCoach.generateReport())};const LocalCoach={generateReport(){const e=state.sessionStats,t=e.scores.length,n=Math.round(e.scores.reduce((e,t)=&gt;e+t,0)/t),a=Math.round((Date.now()-e.startTime)/1e3),s=Object.entries(e.limbErrors).sort((e,t)=&gt;t[1]-e[1]).slice(0,2).map(e=&gt;e[0]);Leaderboard.saveRecord(n,{duration:a,issues:s});let r=n&gt;85?&quot;大师级表现！&quot;:n&gt;70?&quot;表现良好！&quot;:&quot;再接再厉！&quot;,i=n&gt;70?`注意 ${s.join(&quot; &amp; &quot;)} 的细节。`:`请放慢速度，重点练习 ${s.join(&quot;、&quot;)}。`;els.reportContent.innerHTML=`\n                    &lt;div class=&quot;grid grid-cols-2 gap-4 mb-4 text-center&quot;&gt;\n                        &lt;div class=&quot;bg-slate-800 p-3 rounded-xl&quot;&gt;&lt;div class=&quot;text-2xl font-bold text-blue-400&quot;&gt;${n}&lt;/div&gt;&lt;div class=&quot;text-xs text-slate-400&quot;&gt;得分&lt;/div&gt;&lt;/div&gt;\n                        &lt;div class=&quot;bg-slate-800 p-3 rounded-xl&quot;&gt;&lt;div class=&quot;text-2xl font-bold text-purple-400&quot;&gt;${a}s&lt;/div&gt;&lt;div class=&quot;text-xs text-slate-400&quot;&gt;时长&lt;/div&gt;&lt;/div&gt;\n                    &lt;/div&gt;\n                    &lt;div class=&quot;mb-4&quot;&gt;&lt;h4 class=&quot;font-bold text-white&quot;&gt;点评：&lt;/h4&gt;&lt;p class=&quot;text-slate-300 text-sm&quot;&gt;${r}&lt;/p&gt;&lt;/div&gt;\n                    &lt;div class=&quot;bg-yellow-400/10 p-3 rounded border-l-4 border-yellow-400&quot;&gt;&lt;h4 class=&quot;font-bold text-yellow-400 text-sm&quot;&gt;建议：&lt;/h4&gt;&lt;p class=&quot;text-xs text-slate-300&quot;&gt;${i}&lt;/p&gt;&lt;/div&gt;\n                    &lt;div class=&quot;mt-4 text-center text-xs text-green-400&quot;&gt;✨ 成绩已计入 [${StudentManager.current}] 的排行榜&lt;/div&gt;\n                `,els.reportModal.classList.remove(&quot;hidden&quot;)}};function handleViewportResize(){els.studentCanvas.width=window.innerWidth,els.studentCanvas.height=window.innerHeight,ensureTeacherPanelInsideViewport()}window.addEventListener(&quot;resize&quot;,handleViewportResize),window.addEventListener(&quot;orientationchange&quot;,()=&gt;{setTimeout(handleViewportResize,180)}),handleViewportResize(),initAI();&lt;/script&gt;
+&lt;/body&gt;
+
+&lt;/html&gt;" title="AI Follow Mirror" allow="camera *; microphone *; autoplay *; fullscreen *; display-capture *;" style="width:100%; height:70vh; min-height:600px; border:none; border-radius:12px;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div id="groupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('groupModal').style.display='none'">&times;</span>
+            <h2>🏫 智能分层分组建议</h2>
+            <div id="groupResult"></div>
+            <button class="btn btn-print" style="margin-top: 20px; width: 100%;" onclick="copyGroups()">📋 复制名单</button>
+        </div>
+    </div>
+
+    <script src="assets/portrait.12d4fc8854.js"></script>
+<div class="review-watermark">仅供教育部案例评审演示<br>魔镜系统3.1 · 2026-06-11</div>
+</body>
+
+</html>

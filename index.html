@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>教育案例演示小程序</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5c667a;
+      --line: #d9e1ec;
+      --green: #167a64;
+      --blue: #2457a6;
+      --gold: #b9801f;
+      --paper: rgba(255, 255, 255, 0.88);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(120deg, rgba(36, 87, 166, 0.12), rgba(22, 122, 100, 0.13)),
+        repeating-linear-gradient(90deg, rgba(23, 32, 51, 0.045) 0 1px, transparent 1px 42px),
+        #f5f8fb;
+    }
+    main {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    header, section, footer {
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+    header {
+      padding: 46px 0 22px;
+    }
+    .kicker {
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 18px 0 0;
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .apps {
+      align-self: center;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      padding: 28px 0 44px;
+    }
+    .app-card {
+      min-height: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 26px;
+      background: var(--paper);
+      box-shadow: 0 22px 60px rgba(23, 32, 51, 0.10);
+      display: grid;
+      align-content: space-between;
+      gap: 24px;
+    }
+    .app-card strong {
+      display: block;
+      font-size: 24px;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+    .app-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .app-card a {
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 6px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      background: var(--blue);
+    }
+    .app-card:nth-child(2) a { background: var(--green); }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .tags span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.72);
+    }
+    footer {
+      padding: 0 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 760px) {
+      .apps { grid-template-columns: 1fr; }
+      header { padding-top: 32px; }
+      .app-card { min-height: 220px; padding: 22px; }
+    }
+  </style>
+
+    <link rel="icon" href="data:,">
+    <style id="review-protection-style">
+      html:not(.review-access-ok) body { visibility: hidden; }
+      .review-watermark {
+        position: fixed;
+        right: 12px;
+        bottom: 10px;
+        z-index: 2147483647;
+        pointer-events: none;
+        font: 600 12px/1.45 "Microsoft YaHei", sans-serif;
+        color: rgba(15, 23, 42, 0.46);
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 6px;
+        padding: 6px 10px;
+        backdrop-filter: blur(6px);
+      }
+      .review-denied {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: "Microsoft YaHei", sans-serif;
+      }
+      .review-denied-box {
+        max-width: 420px;
+        padding: 28px;
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 18px 46px rgba(15, 23, 42, 0.12);
+      }
+    </style>
+
+    <script id="review-access-gate">
+      (function () {
+        var expected = "2716a5ced73ba49995d5130fde58597c0dc46018f01afe34a9252a8252c0a1c1";
+        var expectedFallback = "cc21fffb";
+        var storageKey = "edu_case_review_access_v1";
+        function fallbackHash(input) {
+          var h = 0x811c9dc5;
+          for (var i = 0; i < input.length; i += 1) {
+            h ^= input.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+          }
+          return ("00000000" + h.toString(16)).slice(-8);
+        }
+        function sha256(input) {
+          if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+            return Promise.resolve(fallbackHash(input));
+          }
+          return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input)).then(function (buffer) {
+            return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
+              return b.toString(16).padStart(2, "0");
+            }).join("");
+          });
+        }
+        function deny() {
+          document.documentElement.className = "";
+          document.documentElement.innerHTML = "<body><main class=\"review-denied\"><section class=\"review-denied-box\"><h1>访问码不正确</h1><p>此页面为教育案例评审演示版，请使用单独提供的访问码打开。</p></section></main><div class=\"review-watermark\">仅供教育部案例评审演示<br>演示入口 · 2026-06-11</div></body>";
+        }
+        function grant(code) {
+          try { sessionStorage.setItem(storageKey, code); } catch (_) {}
+          document.documentElement.classList.add("review-access-ok");
+        }
+        var params = new URLSearchParams(location.search);
+        var candidate = params.get("code");
+        try { candidate = candidate || sessionStorage.getItem(storageKey); } catch (_) {}
+        if (!candidate) candidate = window.prompt("请输入教育案例评审访问码");
+        sha256(String(candidate || "")).then(function (hash) {
+          if (hash === expected || hash === expectedFallback) grant(String(candidate || ""));
+          else deny();
+        }).catch(deny);
+      })();
+    </script>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="kicker">教育部案例申报 · 评审演示入口</div>
+      <h1>轻量化 AI 体育课堂演示小程序</h1>
+      <p class="subtitle">发布版已移除公开在线接口密钥，并对核心动作计数与跟练评分逻辑进行混淆加固。页面仅用于案例评审演示。</p>
+    </header>
+    <section class="apps" aria-label="演示小程序">
+      <article class="app-card">
+        <div>
+          <strong>魔镜系统 3.1</strong>
+          <p>体测画像、国家平台资源融合、跟练镜像与课堂证据导出。</p>
+          <div class="tags"><span>体测画像</span><span>跟练评分</span><span>证据包</span></div>
+        </div>
+        <a href="portrait.html">进入演示</a>
+      </article>
+      <article class="app-card">
+        <div>
+          <strong>AI 双人游戏</strong>
+          <p>基于摄像头的双人姿态识别、动作计数与课堂互动竞赛。</p>
+          <div class="tags"><span>高抬腿</span><span>侧滑步</span><span>双人识别</span></div>
+        </div>
+        <a href="dual-game.html">进入演示</a>
+      </article>
+    </section>
+    <footer>访问码单独提供。请使用 HTTPS 地址打开摄像头相关功能。</footer>
+  </main>
+<div class="review-watermark">仅供教育部案例评审演示<br>演示入口 · 2026-06-11</div>
+</body>
+</html>

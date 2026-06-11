@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI双人游戏 - 评审演示版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1);
+            z-index: 1;
+        }
+
+        #divider-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 5;
+        }
+
+        .divider-vertical {
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            transform: translateX(-50%);
+        }
+
+        .divider-horizontal {
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 4px;
+            transform: translateY(-50%);
+        }
+
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .player-panel {
+            position: absolute;
+            padding: 10px;
+            pointer-events: none;
+        }
+
+        #p1-panel {
+            top: 15px;
+            left: 15px;
+        }
+
+        #p2-panel {
+            top: 15px;
+            right: 15px;
+            text-align: right;
+        }
+
+        /* 简约透明设计 - 适合小学生 */
+        .player-info {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 10px 18px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .player-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .label-p1 {
+            color: #f97316;
+        }
+
+        .label-p2 {
+            color: #3b82f6;
+        }
+
+        .player-score {
+            font-size: 2.5rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .score-p1 {
+            color: #f97316;
+        }
+
+        .score-p2 {
+            color: #3b82f6;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 50;
+            pointer-events: auto;
+        }
+
+        #mode-select {
+            padding: 10px 18px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            font-size: 1rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            outline: none;
+        }
+
+        #mode-select:focus {
+            border-color: #3b82f6;
+        }
+
+        #start-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background: #22c55e;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #start-btn:hover {
+            transform: scale(1.05);
+        }
+
+        #start-btn.running {
+            background: #ef4444;
+        }
+
+        #status-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ddd;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #status-text {
+            font-size: 1.2rem;
+            color: #475569;
+            font-weight: bold;
+        }
+
+        #error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #error-overlay h3 {
+            color: #ef4444;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        #error-overlay p {
+            color: #64748b;
+            max-width: 400px;
+        }
+
+        #error-overlay button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            background: #64748b;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #result-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .result-content {
+            background: white;
+            border-radius: 25px;
+            padding: 40px 60px;
+            text-align: center;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #475569;
+            margin-bottom: 30px;
+        }
+
+        .result-scores {
+            display: flex;
+            gap: 50px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .result-player {
+            text-align: center;
+        }
+
+        .result-player-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .result-player-score {
+            font-size: 4rem;
+            font-weight: 900;
+        }
+
+        .winner-badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .result-btn {
+            padding: 15px 40px;
+            border-radius: 30px;
+            border: none;
+            background: #3b82f6;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .feedback {
+            position: absolute;
+            background: #22c55e;
+            color: white;
+            padding: 8px 25px;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-style: italic;
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: pop 0.3s ease;
+            z-index: 15;
+        }
+
+        #feedback-p1 {
+            top: 40%;
+            left: 15%;
+            transform: translate(-50%, -50%);
+        }
+
+        #feedback-p2 {
+            top: 40%;
+            right: 15%;
+            transform: translate(50%, -50%);
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        #warning-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 300;
+            display: none;
+        }
+
+        video {
+            display: none;
+        }
+    </style>
+
+    <link rel="icon" href="data:,">
+    <style id="review-protection-style">
+      html:not(.review-access-ok) body { visibility: hidden; }
+      .review-watermark {
+        position: fixed;
+        right: 12px;
+        bottom: 10px;
+        z-index: 2147483647;
+        pointer-events: none;
+        font: 600 12px/1.45 "Microsoft YaHei", sans-serif;
+        color: rgba(15, 23, 42, 0.46);
+        background: rgba(255, 255, 255, 0.62);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 6px;
+        padding: 6px 10px;
+        backdrop-filter: blur(6px);
+      }
+      .review-denied {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: "Microsoft YaHei", sans-serif;
+      }
+      .review-denied-box {
+        max-width: 420px;
+        padding: 28px;
+        border: 1px solid #dbe3ef;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 18px 46px rgba(15, 23, 42, 0.12);
+      }
+    </style>
+
+    <script id="review-access-gate">
+      (function () {
+        var expected = "2716a5ced73ba49995d5130fde58597c0dc46018f01afe34a9252a8252c0a1c1";
+        var expectedFallback = "cc21fffb";
+        var storageKey = "edu_case_review_access_v1";
+        function fallbackHash(input) {
+          var h = 0x811c9dc5;
+          for (var i = 0; i < input.length; i += 1) {
+            h ^= input.charCodeAt(i);
+            h = Math.imul(h, 0x01000193) >>> 0;
+          }
+          return ("00000000" + h.toString(16)).slice(-8);
+        }
+        function sha256(input) {
+          if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+            return Promise.resolve(fallbackHash(input));
+          }
+          return window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(input)).then(function (buffer) {
+            return Array.prototype.map.call(new Uint8Array(buffer), function (b) {
+              return b.toString(16).padStart(2, "0");
+            }).join("");
+          });
+        }
+        function deny() {
+          document.documentElement.className = "";
+          document.documentElement.innerHTML = "<body><main class=\"review-denied\"><section class=\"review-denied-box\"><h1>访问码不正确</h1><p>此页面为教育案例评审演示版，请使用单独提供的访问码打开。</p></section></main><div class=\"review-watermark\">仅供教育部案例评审演示<br>AI双人游戏 · 2026-06-11</div></body>";
+        }
+        function grant(code) {
+          try { sessionStorage.setItem(storageKey, code); } catch (_) {}
+          document.documentElement.classList.add("review-access-ok");
+        }
+        var params = new URLSearchParams(location.search);
+        var candidate = params.get("code");
+        try { candidate = candidate || sessionStorage.getItem(storageKey); } catch (_) {}
+        if (!candidate) candidate = window.prompt("请输入教育案例评审访问码");
+        sha256(String(candidate || "")).then(function (hash) {
+          if (hash === expected || hash === expectedFallback) grant(String(candidate || ""));
+          else deny();
+        }).catch(deny);
+      })();
+    </script>
+</head>
+
+<body>
+
+
+    <div id="game-container">
+        <video id="video" playsinline></video>
+        <canvas id="canvas"></canvas>
+        <div id="divider-line" class="divider-vertical"></div>
+
+        <div id="ui-overlay">
+            <div id="p1-panel" class="player-panel">
+                <div class="player-info">
+                    <div class="player-label label-p1">🎮 学员1</div>
+                    <div class="player-score score-p1" id="score-p1">0</div>
+                </div>
+            </div>
+            <div id="p2-panel" class="player-panel">
+                <div class="player-info">
+                    <div class="player-label label-p2">🎮 学员2</div>
+                    <div class="player-score score-p2" id="score-p2">0</div>
+                </div>
+            </div>
+            <div id="feedback-p1" class="feedback">Good!</div>
+            <div id="feedback-p2" class="feedback">Good!</div>
+        </div>
+
+        <div id="controls">
+            <select id="mode-select">
+                <option value="high-knees">🦵 高抬腿</option>
+                <option value="side-slide">↔️ 侧滑步</option>
+            </select>
+            <button id="start-btn">▶</button>
+        </div>
+
+        <div id="status-overlay">
+            <div class="spinner"></div>
+            <div id="status-text">正在初始化...</div>
+        </div>
+
+        <div id="error-overlay">
+            <h3>❌ 启动失败</h3>
+            <p id="error-text"></p>
+            <button onclick="location.reload()">刷新重试</button>
+        </div>
+
+        <div id="result-modal">
+            <div class="result-content">
+                <div class="result-title">🎉 游戏结束</div>
+                <div class="result-scores">
+                    <div class="result-player">
+                        <div class="result-player-name">学员1</div>
+                        <div class="result-player-score score-p1" id="result-score-p1">0</div>
+                        <div id="winner-p1" class="winner-badge" style="display:none">🏆 冠军</div>
+                    </div>
+                    <div class="result-player">
+                        <div class="result-player-name">学员2</div>
+                        <div class="result-player-score score-p2" id="result-score-p2">0</div>
+                        <div id="winner-p2" class="winner-badge" style="display:none">🏆 冠军</div>
+                    </div>
+                </div>
+                <button class="result-btn" onclick="restartGame()">重新开始</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/motion-core.8c3ecda6b1.js"></script>
+<script src="assets/dual-game.6e12bb64bf.js"></script>
+<div class="review-watermark">仅供教育部案例评审演示<br>AI双人游戏 · 2026-06-11</div>
+</body>
+
+</html>
